@@ -27,7 +27,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film createFilm (@RequestBody Film film) {
+    public Film createFilm(@RequestBody Film film) {
         log.info("Попытка создания фильма: {}", film.getName());
 
         validateFilm(film);
@@ -76,12 +76,12 @@ public class FilmController {
         return existingFilm;
     }
 
-    private void validateFilm (Film film) {
+    private void validateFilm(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
             log.warn("Ошибка валидации: название фильма пустое");
             throw new ValidationException("Название не может быть пустым");
         }
-        if (film.getDescription() == null ||film.getDescription().length() > 200) {
+        if (film.getDescription() == null || film.getDescription().length() > 200) {
             log.warn("Ошибка валидации: описание больше 200 символов или null");
             throw new ValidationException("Максимальная длина описания — 200 символов");
         }
@@ -100,7 +100,7 @@ public class FilmController {
                 .stream()
                 .mapToLong(id -> id)
                 .max()
-                .orElse(0 );
+                .orElse(0);
         return ++currentMaxId;
     }
 }

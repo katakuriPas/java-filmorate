@@ -47,7 +47,7 @@ public class UserController {
             log.warn("id не указан");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-        if(users.containsKey(newUser.getId())) {
+        if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());
             boolean loginExists = users.values().stream()
                     .anyMatch(existingLogin -> existingLogin.getLogin().equals(newUser.getLogin()));
@@ -94,7 +94,7 @@ public class UserController {
             log.warn("Ошибка валидации: логин пустой или содержит пробелы");
             throw new ValidationException("Логин не должен быть пустым и содержать пробелы");
         }
-        if(user.getName() == null || user.getName().isBlank()) {
+        if (user.getName() == null || user.getName().isBlank()) {
             log.info("Имя пользователя было заменено на логин {}", user.getLogin());
             user.setName(user.getLogin());
         }
