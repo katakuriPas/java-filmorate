@@ -30,22 +30,7 @@ public class FilmController {
     public Film createFilm (@RequestBody Film film) {
         log.info("Попытка создания фильма: {}", film.getName());
 
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("Ошибка валидации: название фильма пустое");
-            throw new ValidationException("Название не может быть пустым");
-        }
-        if (film.getDescription() == null ||film.getDescription().length() > 200) {
-            log.warn("Ошибка валидации: описание больше 200 символов или null");
-            throw new ValidationException("Максимальная длина описания — 200 символов");
-        }
-        if (!film.getReleaseDate().isAfter(EARLIEST_RELEASE_DATE)) {
-            log.warn("Ошибка валидации: релиз фильма раньше 28 декабря 1895 года");
-            throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
-        }
-        if (film.getDuration() < 0) {
-            log.warn("Ошибка валидации: продолжительность фильма <= 0: {}", film.getDuration());
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
-        }
+        validateFilm(film);
 
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -79,6 +64,8 @@ public class FilmController {
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
 
+        validateFilm(newFilm);
+
         Film existingFilm = films.get(newFilm.getId());
         existingFilm.setName(newFilm.getName());
         existingFilm.setDescription(newFilm.getDescription());
@@ -87,6 +74,25 @@ public class FilmController {
 
         log.info("Фильм с id = {} успешно обновлён", newFilm.getId());
         return existingFilm;
+    }
+
+    private void validateFilm (Film film) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            log.warn("Ошибка валидации: название фильма пустое");
+            throw new ValidationException("Название не может быть пустым");
+        }
+        if (film.getDescription() == null ||film.getDescription().length() > 200) {
+            log.warn("Ошибка валидации: описание больше 200 символов или null");
+            throw new ValidationException("Максимальная длина описания — 200 символов");
+        }
+        if (!film.getReleaseDate().isAfter(EARLIEST_RELEASE_DATE)) {
+            log.warn("Ошибка валидации: релиз фильма раньше 28 декабря 1895 года");
+            throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
+        }
+        if (film.getDuration() < 0) {
+            log.warn("Ошибка валидации: продолжительность фильма <= 0: {}", film.getDuration());
+            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
+        }
     }
 
     private long getNextId() {

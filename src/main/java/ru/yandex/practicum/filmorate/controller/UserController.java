@@ -31,22 +31,8 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         log.info("Попытка создания фильма: {}", user.getName());
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.warn("Ошибка валидации: email не указан или не содержит @");
-            throw new ValidationException("Email должен быть указан и содержать @");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            log.warn("Ошибка валидации: логин пустой или содержит пробелы");
-            throw new ValidationException("Логин не должен быть пустым и содержать пробелы");
-        }
-        if(user.getName() == null || user.getName().isBlank()) {
-            log.info("Имя пользователя было заменено на логин {}", user.getLogin());
-            user.setName(user.getLogin());
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Ошибка валидации: некорректно введен день рождения");
-            throw new ValidationException("День рождения не может быть в будущем");
-        }
+
+        validateUser(user);
 
         user.setId(getNextId());
         log.info("Пользователь успешно добавлен: {}", user.getName());
@@ -85,6 +71,8 @@ public class UserController {
                 throw new ValidationException("День рождения не может быть в будущем");
             }
 
+            validateUser(newUser);
+
             User existingUser = users.get(newUser.getId());
             existingUser.setEmail(newUser.getEmail());
             existingUser.setLogin(newUser.getLogin());
@@ -95,6 +83,25 @@ public class UserController {
             return existingUser;
         }
         throw new NotFoundException("User с id = " + newUser.getId() + " не найден");
+    }
+
+    private void validateUser(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            log.warn("Ошибка валидации: email не указан или не содержит @");
+            throw new ValidationException("Email должен быть указан и содержать @");
+        }
+        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+            log.warn("Ошибка валидации: логин пустой или содержит пробелы");
+            throw new ValidationException("Логин не должен быть пустым и содержать пробелы");
+        }
+        if(user.getName() == null || user.getName().isBlank()) {
+            log.info("Имя пользователя было заменено на логин {}", user.getLogin());
+            user.setName(user.getLogin());
+        }
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            log.warn("Ошибка валидации: некорректно введен день рождения");
+            throw new ValidationException("День рождения не может быть в будущем");
+        }
     }
 
     private long getNextId() {
