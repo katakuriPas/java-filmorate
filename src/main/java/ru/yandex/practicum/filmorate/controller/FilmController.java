@@ -30,6 +30,10 @@ public class FilmController {
     public Film createFilm(@RequestBody Film film) {
         log.info("Попытка создания фильма: {}", film.getName());
 
+        if (film.getName() == null || film.getName().isBlank()) {
+            log.warn("Ошибка валидации: название фильма пустое");
+            throw new ValidationException("Название не может быть пустым");
+        }
         validateFilm(film);
 
         film.setId(getNextId());
@@ -51,18 +55,6 @@ public class FilmController {
             log.warn("Id не был указан");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-        if (newFilm.getDescription().length() > 200) {
-            log.warn("Ошибка валидации: описание больше 200 символов");
-            throw new ValidationException("Максимальная длина описания — 200 символов");
-        }
-        if (newFilm.getReleaseDate().isBefore(EARLIEST_RELEASE_DATE)) {
-            log.warn("Ошибка валидации: некорректная дата релиза");
-            throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
-        }
-        if (newFilm.getDuration() <= 0) {
-            log.warn("Ошибка валидации: продолжительность <= 0 при обновлении");
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
-        }
 
         validateFilm(newFilm);
 
@@ -77,15 +69,11 @@ public class FilmController {
     }
 
     private void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("Ошибка валидации: название фильма пустое");
-            throw new ValidationException("Название не может быть пустым");
-        }
         if (film.getDescription() == null || film.getDescription().length() > 200) {
             log.warn("Ошибка валидации: описание больше 200 символов или null");
             throw new ValidationException("Максимальная длина описания — 200 символов");
         }
-        if (!film.getReleaseDate().isAfter(EARLIEST_RELEASE_DATE)) {
+        if (film.getReleaseDate().isBefore(EARLIEST_RELEASE_DATE)) {
             log.warn("Ошибка валидации: релиз фильма раньше 28 декабря 1895 года");
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
         }

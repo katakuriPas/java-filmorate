@@ -53,21 +53,6 @@ public class UserController {
                 log.warn("Ошибка валидации: Логин {} уже используется", newUser.getLogin());
                 throw new DuplicatedDataException("Этот логин уже используется");
             }
-            if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")) {
-                log.warn("Ошибка валидации: email либо пустой, либо не содержит @");
-                throw new ConditionsNotMetException("Email должен быть указан и содержать @");
-            }
-            if (newUser.getLogin().contains("Ошибка валидации: логин содержит пробелы")) {
-                throw new ValidationException("Логин не должен содержать пробелы");
-            }
-            if (newUser.getName() == null || newUser.getName().isBlank()) {
-                log.info("Пустое имя пользователя было заменено на логин {}", newUser.getLogin());
-                newUser.setName(newUser.getLogin());
-            }
-            if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                log.warn("Ошибка валидации: день рождения будущего числа");
-                throw new ValidationException("День рождения не может быть в будущем");
-            }
 
             validateUser(newUser);
 
