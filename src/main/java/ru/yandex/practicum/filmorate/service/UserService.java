@@ -63,7 +63,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public Collection<User> listFriends (Long id) {
+    public Collection<User> listFriends(Long id) {
         User user = userStorage.getUserById(id);
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
             return Collections.emptyList();
