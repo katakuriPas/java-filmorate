@@ -1,4 +1,5 @@
 package ru.yandex.practicum.filmorate.storage;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
@@ -9,11 +10,10 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class InMemoryFilmStorage implements FilmStorage{
+public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Long, Film> films = new HashMap<>();
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
@@ -28,16 +28,20 @@ public class InMemoryFilmStorage implements FilmStorage{
     public Film createFilm(Film film) {
         log.info("Попытка создания фильма: {}", film.getName());
 
+        if (film == null) {
+            throw new ValidationException("Фильм не может быть пустым");
+        }
+
         if (film.getName() == null || film.getName().isBlank()) {
             log.warn("Ошибка валидации: название фильма пустое");
             throw new ValidationException("Название не может быть пустым");
         }
+
         validateFilm(film);
 
         film.setId(getNextId());
-        film.setIdUsersLike(new HashSet<>());
-        films.put(film.getId(), film);
         log.info("Фильм успешно добавлен: {}", film.getName());
+        films.put(film.getId(), film);
         return film;
     }
 
@@ -62,14 +66,17 @@ public class InMemoryFilmStorage implements FilmStorage{
         existingFilm.setDescription(newFilm.getDescription());
         existingFilm.setReleaseDate(newFilm.getReleaseDate());
         existingFilm.setDuration(newFilm.getDuration());
+        existingFilm.setIdUsersLike(newFilm.getIdUsersLike());
 
         log.info("Фильм с id = {} успешно обновлён", newFilm.getId());
         return existingFilm;
     }
 
     private void validateFilm(Film film) {
-        if (film.getDescription() == null || film.getDescription().length() > 200) {
-            log.warn("Ошибка валидации: описание больше 200 символов или null");
+        if (film.getDescription() == null) {
+            throw new ValidationException("Описание не может быть пустым");
+        }
+        if (film.getDescription().length() > 200) {
             throw new ValidationException("Максимальная длина описания — 200 символов");
         }
         if (film.getReleaseDate().isBefore(EARLIEST_RELEASE_DATE)) {

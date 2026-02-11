@@ -8,28 +8,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ValidationException.class)
+    @ExceptionHandler({ValidationException.class, DuplicatedDataException.class, ConditionsNotMetException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
-    public ErrorResponse handleValidationException(ValidationException e) {
-        return new ErrorResponse("Ошибка валидации:" + e.getMessage());
+    public ErrorResponse handleBadRequestException(Exception e) {
+        String prefix = switch (e) {
+            case ValidationException ve -> "Ошибка валидации:";
+            case DuplicatedDataException de -> "Ошибка данных:";
+            case ConditionsNotMetException cne -> "Условия не выполнены:";
+            default -> "Ошибка:";
+        };
+        return new ErrorResponse(prefix + " " + e.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND) // 404
     public ErrorResponse handleNotFoundException(NotFoundException e) {
         return new ErrorResponse("Объект не найден: " + e.getMessage());
-    }
-
-    @ExceptionHandler(DuplicatedDataException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
-    public ErrorResponse handleDuplicatedDataException(DuplicatedDataException e) {
-        return new ErrorResponse("Ошибка данных: " + e.getMessage());
-    }
-
-    @ExceptionHandler(ConditionsNotMetException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
-    public ErrorResponse handleConditionsNotMetException(ConditionsNotMetException e) {
-        return new ErrorResponse("Условия не выполнены: " + e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

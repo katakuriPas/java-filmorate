@@ -11,12 +11,11 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 @Component
 @Slf4j
-public class InMemoryUserStorage implements UserStorage{
+public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 
@@ -33,8 +32,6 @@ public class InMemoryUserStorage implements UserStorage{
         validateUser(user);
 
         user.setId(getNextId());
-        user.setFriends(new HashSet<>());
-        user.setLikeFilms(new HashSet<>());
         log.info("Пользователь успешно добавлен: {}", user.getName());
         users.put(user.getId(), user);
         return user;
@@ -72,6 +69,15 @@ public class InMemoryUserStorage implements UserStorage{
         throw new NotFoundException("User с id = " + newUser.getId() + " не найден");
     }
 
+    @Override
+    public User getUserById(Long id) {
+        User user = users.get(id);
+        if (user == null) {
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        }
+        return user;
+    }
+
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("Ошибка валидации: email не указан или не содержит @");
@@ -98,14 +104,5 @@ public class InMemoryUserStorage implements UserStorage{
                 .max()
                 .orElse(0);
         return ++currentMaxId;
-    }
-
-    @Override
-    public User getUserById(Long id) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        }
-        return user;
     }
 }
