@@ -2,16 +2,19 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.*;
 
 @Component
+@Profile("memory")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
 
@@ -66,7 +69,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         existingFilm.setDescription(newFilm.getDescription());
         existingFilm.setReleaseDate(newFilm.getReleaseDate());
         existingFilm.setDuration(newFilm.getDuration());
-        existingFilm.setIdUsersLike(newFilm.getIdUsersLike());
 
         log.info("Фильм с id = {} успешно обновлён", newFilm.getId());
         return existingFilm;
@@ -98,12 +100,28 @@ public class InMemoryFilmStorage implements FilmStorage {
         return ++currentMaxId;
     }
 
-    public Film getFilmById(Long id) {
-        Film film = films.get(id);
-        if (film == null) {
-            throw new NotFoundException("Фильм с id = " + id + " не найден");
-        }
-        return film;
+    public Optional<Film> getFilmById(Long id) {
+        return Optional.ofNullable(films.get(id));
+    }
+
+    @Override
+    public void likeFilm(Long id, Long userId) {
+
+    }
+
+    @Override
+    public void deleteLike(Long id, Long userId) {
+
+    }
+
+    @Override
+    public List<Film> mostPopularFilms(Integer count) {
+        return List.of();
+    }
+
+    @Override
+    public Optional<Mpa> getMpaByName(String name) {
+        return Optional.empty();
     }
 
 }
