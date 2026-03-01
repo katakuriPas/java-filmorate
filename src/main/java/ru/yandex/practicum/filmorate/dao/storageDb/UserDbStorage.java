@@ -23,7 +23,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class UserDbStorage implements UserStorage {
-
     private final JdbcTemplate jdbc;
     private final RowMapper<User> mapper;
 
