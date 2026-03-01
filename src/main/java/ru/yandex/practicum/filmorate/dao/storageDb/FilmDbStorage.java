@@ -8,18 +8,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.GenreMapper;
 import ru.yandex.practicum.filmorate.dao.mappers.MpaMapper;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 @Profile("database")
@@ -28,8 +28,17 @@ import java.util.Optional;
 public class FilmDbStorage implements FilmStorage {
     private static final int LIMIT_FILMS = 10;
 
-    private static final String FIND_ALL = "SELECT * FROM films";
-    private static final String FIND_BY_ID = "SELECT * FROM films WHERE id = ?";
+    private static final String FIND_BY_ID =
+            "SELECT f.*, m.name as mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "WHERE f.id = ?";
+
+    private static final String FIND_ALL =
+            "SELECT f.*, m.name as mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id";
+
     private static final String INSERT = "INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
 
@@ -37,25 +46,50 @@ public class FilmDbStorage implements FilmStorage {
     private static final String DELETE_LIKE = "DELETE FROM like_films WHERE user_id = ? AND film_id = ?";
 
     private static final String MOST_POPULAR_FILMS =
-            "SELECT f.* " +
+            "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name as mpa_name " +
                     "FROM films f " +
-                    "LEFT JOIN like_films lf ON f.id = lf.film_id " +
-                    "GROUP BY f.id " +
-                    "ORDER BY COUNT(lf.user_id) DESC " +
-                    "LIMIT ?";
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "ORDER BY (SELECT COUNT(*) FROM like_films lf WHERE lf.film_id = f.id) DESC " +
+                    "FETCH FIRST ? ROWS ONLY";
+
+    private static final String FIND_GENRES_BY_FILM_ID =
+            "SELECT g.* FROM genre g " +
+                    "JOIN film_genres fg ON g.id = fg.genre_id " +
+                    "WHERE fg.film_id = ?";
+
+    private static final String INSERT_FILM_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+    private static final String DELETE_FILM_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
 
     private final JdbcTemplate jdbc;
     private final RowMapper<Film> mapper;
     private final MpaMapper mpaMapper;
-
-    @Override
-    public Collection<Film> findAllFilm() {
-        return findMany(FIND_ALL);
-    }
+    private final GenreMapper genreMapper;
+    private final FilmMapper filmMapper;
 
     @Override
     public Optional<Film> getFilmById(Long id) {
-        return findOne(FIND_BY_ID, id);
+        Optional<Film> filmOptional = findOne(FIND_BY_ID, id);
+
+        if (filmOptional.isPresent()) {
+            Film film = filmOptional.get();
+
+            List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, id);
+            film.setGenres(new HashSet<>(genres));
+
+            return Optional.of(film);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Collection<Film> findAllFilm() {
+        List<Film> films = findMany(FIND_ALL);
+
+        for (Film film : films) {
+            List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+            film.setGenres(new HashSet<>(genres));
+        }
+        return films;
     }
 
     @Override
@@ -70,7 +104,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> mostPopularFilms(Integer count) {
-        return jdbc.query(MOST_POPULAR_FILMS, mapper, Objects.requireNonNullElse(count, LIMIT_FILMS));
+        return jdbc.query(MOST_POPULAR_FILMS, filmMapper, Objects.requireNonNullElse(count, LIMIT_FILMS));
     }
 
     @Override
@@ -82,6 +116,8 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId()
         );
+        saveFilmGenres(id, film.getGenres());
+
         film.setId(id);
         return film;
     }
@@ -96,7 +132,11 @@ public class FilmDbStorage implements FilmStorage {
                 newFilm.getMpa().getId(),
                 newFilm.getId()
         );
-        return newFilm;
+
+        saveFilmGenres(newFilm.getId(), newFilm.getGenres());
+
+        return getFilmById(newFilm.getId())
+                .orElseThrow(() -> new InternalServerException("Не удалось получить обновлённый фильм"));
     }
 
     @Override
@@ -106,6 +146,19 @@ public class FilmDbStorage implements FilmStorage {
             return Optional.ofNullable(jdbc.queryForObject(sql, mpaMapper, name));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
+        }
+    }
+
+    private void saveFilmGenres(Long filmId, Set<Genre> genres) {
+        jdbc.update(DELETE_FILM_GENRES, filmId);
+
+        // Добавляем новые
+        if (genres != null && !genres.isEmpty()) {
+            for (Genre genre : genres) {
+                if (genre.getId() != null) {
+                    jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
+                }
+            }
         }
     }
 

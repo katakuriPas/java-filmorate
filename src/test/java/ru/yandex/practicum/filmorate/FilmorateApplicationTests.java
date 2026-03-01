@@ -50,7 +50,6 @@ class FilmorateApplicationTests {
 
     @BeforeEach
     void cleanUp() {
-        // Очистка таблиц (в правильном порядке из-за FK)
         jdbc.update("DELETE FROM like_films");
         jdbc.update("DELETE FROM film_genres");
         jdbc.update("DELETE FROM friends");
@@ -60,21 +59,17 @@ class FilmorateApplicationTests {
         jdbc.update("DELETE FROM genre");
         jdbc.update("DELETE FROM mpa");
 
-        // Сброс автоинкремента ID
         jdbc.update("ALTER TABLE users ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE films ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE genre ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE mpa ALTER COLUMN id RESTART WITH 1");
 
-        // Тестовые пользователи
         jdbc.update("INSERT INTO users (email, login, name, birthday) VALUES ('a@b.com', 'user1', 'User1', '1990-01-01')");
         jdbc.update("INSERT INTO users (email, login, name, birthday) VALUES ('c@d.com', 'user2', 'User2', '1991-01-01')");
         jdbc.update("INSERT INTO users (email, login, name, birthday) VALUES ('e@f.com', 'user3', 'User3', '1992-01-01')");
 
-        // Статусы дружбы
         jdbc.update("INSERT INTO friendship_status (id, friendshipStatus) VALUES (1, 'PENDING'), (2, 'ACCEPTED')");
 
-        // Жанры — исправленный синтаксис: отдельные INSERT с корректными кавычками и скобками
         jdbc.update("INSERT INTO genre (name) VALUES ('Комедия')");
         jdbc.update("INSERT INTO genre (name) VALUES ('Драма')");
         jdbc.update("INSERT INTO genre (name) VALUES ('Мультфильм')");
@@ -82,7 +77,6 @@ class FilmorateApplicationTests {
         jdbc.update("INSERT INTO genre (name) VALUES ('Документальный')");
         jdbc.update("INSERT INTO genre (name) VALUES ('Боевик')");
 
-        // Рейтинги MPA — исправленный синтаксис
         jdbc.update("INSERT INTO mpa (name) VALUES ('G')");
         jdbc.update("INSERT INTO mpa (name) VALUES ('PG')");
         jdbc.update("INSERT INTO mpa (name) VALUES ('PG-13')");
@@ -92,8 +86,6 @@ class FilmorateApplicationTests {
 
     @Test
     void genreStorage_findAll_shouldReturnAllGenres() {
-        // Arrange: в БД уже есть жанры (обычно 5 основных: Comedy, Drama, и т.д.)
-        // Act: получаем все жанры
         List<Genre> genres = genreStorage.findAll();
 
         // Assert: проверяем, что жанры возвращаются
@@ -105,8 +97,6 @@ class FilmorateApplicationTests {
 
     @Test
     void mpaStorage_findById_shouldReturnMpa() {
-        // Arrange: в БД уже есть рейтинги MPA (G, PG, PG-13, R, NC-17)
-        // Act: получаем рейтинг по id
         Optional<Mpa> mpaOptional = mpaStorage.findById(1L);
 
         // Assert: проверяем, что рейтинг найден
