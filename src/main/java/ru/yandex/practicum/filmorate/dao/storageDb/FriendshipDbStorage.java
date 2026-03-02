@@ -3,21 +3,15 @@ package ru.yandex.practicum.filmorate.dao.storageDb;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.Collection;
-import java.util.Optional;
 
 @Component
 @Profile("database")
@@ -96,15 +90,6 @@ public class FriendshipDbStorage implements FriendshipStorage {
         return jdbc.query(COMMON_FRIENDS, mapper, userId, otherId);
     }
 
-    private Optional<User> findOne(String query, Object... params) {
-        try {
-            User result = jdbc.queryForObject(query, mapper, params);
-            return Optional.ofNullable(result);
-        } catch (EmptyResultDataAccessException ignored) {
-            return Optional.empty();
-        }
-    }
-
     private void validateUserExists(Long userId) {
         Integer count = jdbc.queryForObject(CHECK_USER_EXISTS, Integer.class, userId);
         if (count == null || count == 0) {
@@ -115,24 +100,5 @@ public class FriendshipDbStorage implements FriendshipStorage {
     private void validateUsersExist(Long userId, Long friendId) {
         validateUserExists(userId);
         validateUserExists(friendId);
-    }
-
-    private long insert(String query, Object... params) {
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            for (int idx = 0; idx < params.length; idx++) {
-                ps.setObject(idx + 1, params[idx]);
-            }
-            return ps;
-        }, keyHolder);
-
-        Long id = keyHolder.getKeyAs(Long.class);
-        if (id != null) {
-            return id;
-        } else {
-            throw new InternalServerException("Не удалось сохранить данные");
-        }
     }
 }

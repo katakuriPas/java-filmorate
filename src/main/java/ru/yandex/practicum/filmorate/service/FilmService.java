@@ -104,10 +104,7 @@ public class FilmService {
     }
 
     public List<Film> mostPopularFilms(Integer count) {
-        if (count == null || count <= 0) {
-            log.warn("Некорректное количество популярных фильмов: {}", count);
-            throw new ValidationException("Параметр count должен быть положительным числом");
-        }
+
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
     }

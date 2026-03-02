@@ -93,52 +93,6 @@ public class UserService {
         return friendshipStorage.commonFriends(userId, otherId);
     }
 
-    /*
-        public void addFriend(Long id, Long newFriendId) {
-            User user = userStorage.getUserById(id);
-            User newFriend = userStorage.getUserById(newFriendId);
-
-            user.getFriends().add(newFriendId);
-            newFriend.getFriends().add(id);
-        }
-
-        public void deleteFriend(Long id, Long friendId) {
-            User user = userStorage.getUserById(id);
-            User friend = userStorage.getUserById(friendId);
-
-            if (user.getFriends() != null) {
-                user.getFriends().remove(friendId);
-            }
-            if (friend.getFriends() != null) {
-                friend.getFriends().remove(id);
-            }
-        }
-
-        public Collection<User> commonIdFriends(Long id, Long otherId) {
-            User userOne = userStorage.getUserById(id);
-            User userTwo = userStorage.getUserById(otherId);
-
-            if (userOne.getFriends() == null || userTwo.getFriends() == null) {
-                return Collections.emptyList();
-            }
-
-            Set<Long> commonIdFriends = new HashSet<>(userOne.getFriends());
-            commonIdFriends.retainAll(userTwo.getFriends());
-            return commonIdFriends.stream()
-                    .map(userStorage::getUserById)
-                    .collect(Collectors.toList());
-        }
-
-        public Collection<User> listFriends(Long id) {
-            User user = userStorage.getUserById(id);
-            if (user.getFriends() == null || user.getFriends().isEmpty()) {
-                return Collections.emptyList();
-            }
-            return user.getFriends().stream()
-                    .map(userStorage::getUserById)
-                    .collect(Collectors.toList());
-        }
-     */
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("Ошибка валидации: email не указан или не содержит @");

@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -118,10 +117,4 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> mostPopularFilms(Integer count) {
         return List.of();
     }
-
-    @Override
-    public Optional<Mpa> getMpaByName(String name) {
-        return Optional.empty();
-    }
-
 }
