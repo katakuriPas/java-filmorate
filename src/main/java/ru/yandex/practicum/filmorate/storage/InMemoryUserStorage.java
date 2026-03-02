@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
@@ -12,8 +13,10 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
+@Profile("memory")
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
 
@@ -70,13 +73,30 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(Long id) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        }
-        return user;
+    public Optional<User> getUserById(Long id) {
+        return Optional.empty();
     }
+
+    public Optional<User> getFilmById(Long id) {
+        return Optional.ofNullable(users.get(id));
+    }
+
+    @Override
+    public boolean existsByLogin(String login) {
+        return true;
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return false;
+    }
+
+    // Проверка: логин занят кем-то, кроме указанного ID
+    @Override
+    public boolean existsByLoginExcludeId(String login, Long excludeId) {
+        return true;
+    }
+
 
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
