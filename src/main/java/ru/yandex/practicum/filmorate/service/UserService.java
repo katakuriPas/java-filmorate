@@ -26,6 +26,16 @@ public class UserService {
         return userStorage.findAllUser();
     }
 
+    public Optional<User> getUserById(Long id) {
+        log.info("Запрос на получение пользователя с id: {}", id);
+
+        Optional<User> existing = userStorage.getUserById(id);
+        if (existing.isEmpty()) {
+            throw new NotFoundException("User с id = " + id + " не найден");
+        }
+        return userStorage.getUserById(id);
+    }
+
     public User createUser(User user) {
         validateUser(user);
 
