@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -26,7 +27,6 @@ class FilmController {
     @ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@RequestBody Film film) {
         return filmService.createFilm(film);
-
     }
 
     @PutMapping
@@ -34,8 +34,13 @@ class FilmController {
         return filmService.updateFilm(newFilm);
     }
 
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        return filmService.getFilmById(id);
+    }
+
     @PutMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void likeFilm(
             @PathVariable Long id,
             @PathVariable Long userId
@@ -44,7 +49,7 @@ class FilmController {
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void deleteLike(
             @PathVariable Long id,
             @PathVariable Long userId
@@ -55,7 +60,7 @@ class FilmController {
     @GetMapping("/popular")
     public List<Film> mostPopularFilms(
             @RequestParam(defaultValue = "10")
-            Integer count
+            @Positive Integer count
     ) {
         return filmService.mostPopularFilms(count);
     }
