@@ -15,7 +15,7 @@ import java.util.Optional;
 public class GenreDbStorage extends BaseRepository<Genre> {
 
     private static final String FIND_BY_ID = "SELECT * FROM genre WHERE id = ?";
-    private static final String FIND_ALL = "SELECT * FROM genre";
+    private static final String FIND_ALL = "SELECT * FROM genre ORDER BY id";
 
     public GenreDbStorage(JdbcTemplate jdbc, GenreMapper genreMapper) {
         super(jdbc, genreMapper);

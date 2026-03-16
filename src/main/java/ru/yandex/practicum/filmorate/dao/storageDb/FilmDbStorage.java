@@ -35,14 +35,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT = "INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
 
-    private static final String LIKE_FILM = "INSERT INTO like_films (film_id, user_id) VALUES (?, ?)";
-    private static final String DELETE_LIKE = "DELETE FROM like_films WHERE user_id = ? AND film_id = ?";
+    private static final String LIKE_FILM = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
+    private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE user_id = ? AND film_id = ?";
 
     private static final String MOST_POPULAR_FILMS =
             "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name as mpa_name " +
                     "FROM films f " +
                     "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-                    "ORDER BY (SELECT COUNT(*) FROM like_films lf WHERE lf.film_id = f.id) DESC " +
+                    "ORDER BY (SELECT COUNT(*) FROM film_likes fl WHERE fl.film_id = f.id) DESC " +
                     "FETCH FIRST ? ROWS ONLY";
 
     private static final String FIND_GENRES_BY_FILM_ID =

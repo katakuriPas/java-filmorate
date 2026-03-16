@@ -1,7 +1,7 @@
 -- ============================================
 -- 1. ОЧИСТКА: Удаляем таблицы в правильном порядке
 -- ============================================
-DROP TABLE IF EXISTS like_films;
+DROP TABLE IF EXISTS film_likes;
 DROP TABLE IF EXISTS film_genres;
 DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS films;
@@ -50,64 +50,59 @@ CREATE TABLE IF NOT EXISTS films (
     description VARCHAR(1000),
     release_date DATE NOT NULL,
     duration INTEGER CHECK (duration > 0),
-    mpa_id INTEGER REFERENCES mpa(id)
+    mpa_id INTEGER,
+    CONSTRAINT fk_films_mpa FOREIGN KEY (mpa_id) REFERENCES mpa(id)
 );
 
 -- Связь фильмов и жанров (многие-ко-многим)
 CREATE TABLE IF NOT EXISTS film_genres (
-    film_id BIGINT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
-    genre_id INTEGER NOT NULL REFERENCES genre(id) ON DELETE CASCADE,
-    PRIMARY KEY (film_id, genre_id)
+    film_id BIGINT NOT NULL,
+    genre_id INTEGER NOT NULL,
+    PRIMARY KEY (film_id, genre_id),
+    CONSTRAINT fk_film_genres_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    CONSTRAINT fk_film_genres_genre FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE CASCADE
 );
 
--- Лайки фильмов
-CREATE TABLE IF NOT EXISTS like_films (
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    film_id BIGINT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, film_id)
+-- Лайки фильмов (ИСПРАВЛЕНО: like_films -> film_likes)
+CREATE TABLE IF NOT EXISTS film_likes (
+    user_id BIGINT NOT NULL,
+    film_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, film_id),
+    CONSTRAINT fk_film_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_film_likes_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
 );
 
 -- Друзья пользователей
 CREATE TABLE IF NOT EXISTS friends (
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    friend_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status_id INTEGER NOT NULL REFERENCES friendship_status(id),
+    user_id BIGINT NOT NULL,
+    friend_id BIGINT NOT NULL,
+    status_id INTEGER NOT NULL,
     PRIMARY KEY (user_id, friend_id),
-    CONSTRAINT friends_check CHECK (user_id <> friend_id)
+    CONSTRAINT friends_check CHECK (user_id <> friend_id),
+    CONSTRAINT fk_friends_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_friends_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_friends_status FOREIGN KEY (status_id) REFERENCES friendship_status(id)
 );
 
 -- ============================================
--- 3. ЗАПОЛНЕНИЕ СПРАВОЧНИКОВ (Безопасно для H2)
+-- 3. ЗАПОЛНЕНИЕ СПРАВОЧНИКОВ
 -- ============================================
 
 -- MPA
-INSERT INTO mpa (name)
-SELECT 'G' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'G');
-INSERT INTO mpa (name)
-SELECT 'PG' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'PG');
-INSERT INTO mpa (name)
-SELECT 'PG-13' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'PG-13');
-INSERT INTO mpa (name)
-SELECT 'R' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'R');
-INSERT INTO mpa (name)
-SELECT 'NC-17' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'NC-17');
+INSERT INTO mpa (name) SELECT 'G' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'G');
+INSERT INTO mpa (name) SELECT 'PG' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'PG');
+INSERT INTO mpa (name) SELECT 'PG-13' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'PG-13');
+INSERT INTO mpa (name) SELECT 'R' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'R');
+INSERT INTO mpa (name) SELECT 'NC-17' WHERE NOT EXISTS (SELECT 1 FROM mpa WHERE name = 'NC-17');
 
 -- Genre
-INSERT INTO genre (name)
-SELECT 'Комедия' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Комедия');
-INSERT INTO genre (name)
-SELECT 'Драма' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Драма');
-INSERT INTO genre (name)
-SELECT 'Мультфильм' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Мультфильм');
-INSERT INTO genre (name)
-SELECT 'Триллер' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Триллер');
-INSERT INTO genre (name)
-SELECT 'Документальный' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Документальный');
-INSERT INTO genre (name)
-SELECT 'Боевик' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Боевик');
+INSERT INTO genre (name) SELECT 'Комедия' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Комедия');
+INSERT INTO genre (name) SELECT 'Драма' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Драма');
+INSERT INTO genre (name) SELECT 'Мультфильм' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Мультфильм');
+INSERT INTO genre (name) SELECT 'Триллер' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Триллер');
+INSERT INTO genre (name) SELECT 'Документальный' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Документальный');
+INSERT INTO genre (name) SELECT 'Боевик' WHERE NOT EXISTS (SELECT 1 FROM genre WHERE name = 'Боевик');
 
 -- Friendship Status
-INSERT INTO friendship_status (friendshipStatus)
-SELECT 'PENDING' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'PENDING');
-INSERT INTO friendship_status (friendshipStatus)
-SELECT 'ACCEPTED' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'ACCEPTED');
+INSERT INTO friendship_status (friendshipStatus) SELECT 'PENDING' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'PENDING');
+INSERT INTO friendship_status (friendshipStatus) SELECT 'ACCEPTED' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'ACCEPTED');
