@@ -14,7 +14,7 @@ import java.util.Optional;
 @Profile("database")
 public class MpaDbStorage extends BaseRepository<Mpa> {
     private static final String FIND_BY_ID = "SELECT * FROM mpa WHERE id = ?";
-    private static final String FIND_ALL = "SELECT * FROM mpa";
+    private static final String FIND_ALL = "SELECT * FROM mpa ORDER BY id";
 
     public MpaDbStorage(JdbcTemplate jdbc, RowMapper<Mpa> mapper) {
         super(jdbc, mapper);

@@ -33,7 +33,7 @@ public class FriendshipDbStorage implements FriendshipStorage {
             "SELECT u.* FROM users u " +
                     "JOIN friends f ON u.id = f.friend_id " +
                     "WHERE f.user_id = ? " +
-                    "ORDER BY u.name";
+                    "ORDER BY u.id";
 
     private static final String COMMON_FRIENDS =
             "SELECT u.* FROM users u " +

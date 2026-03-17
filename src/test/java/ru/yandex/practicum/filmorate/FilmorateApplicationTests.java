@@ -50,7 +50,7 @@ class FilmorateApplicationTests {
 
     @BeforeEach
     void cleanUp() {
-        jdbc.update("DELETE FROM like_films");
+        jdbc.update("DELETE FROM film_likes");
         jdbc.update("DELETE FROM film_genres");
         jdbc.update("DELETE FROM friends");
         jdbc.update("DELETE FROM films");

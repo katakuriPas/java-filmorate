@@ -8,6 +8,8 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.HashSet;
+
 @Component
 public class FilmMapper implements RowMapper<Film> {
     @Override
@@ -18,6 +20,7 @@ public class FilmMapper implements RowMapper<Film> {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .duration(rs.getInt("duration"))
+                .genres(new HashSet<>())
                 .build();
 
         Long mpaId = rs.getLong("mpa_id");
