@@ -343,7 +343,7 @@ class FilmorateApplicationTests {
 
         // Assert: проверяем, что запись появилась в таблице like_films
         Integer count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM like_films WHERE film_id = ? AND user_id = ?",
+                "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?",
                 Integer.class,
                 film.getId(), 1L
         );
@@ -367,7 +367,7 @@ class FilmorateApplicationTests {
 
         // Assert: проверяем, что запись удалена из таблицы like_films
         Integer count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM like_films WHERE film_id = ? AND user_id = ?",
+                "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?",
                 Integer.class,
                 film.getId(), 1L
         );
