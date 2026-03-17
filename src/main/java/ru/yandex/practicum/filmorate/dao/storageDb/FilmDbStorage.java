@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dao.storageDb;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import ru.yandex.practicum.filmorate.dao.BaseRepository;
 import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
 import ru.yandex.practicum.filmorate.dao.mappers.GenreMapper;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -152,6 +154,21 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
                 }
             }
+        }
+    }
+
+    @Override
+    public void deleteFilm(Long id) {
+        String DELETE_FILM = "DELETE FROM films WHERE id = ?";
+
+        try {
+            int rowsAffected = jdbc.update(DELETE_FILM, id);
+
+            if (rowsAffected == 0) {
+                throw new NotFoundException("Фильма с id " + id + " нет в базе");
+            }
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Ошибка при работе с БД: " + e.getMessage(), e);
         }
     }
 }

@@ -134,4 +134,10 @@ public class FilmService {
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
     }
+
+    public void deleteFilm(Long id) {
+        log.info("Получен запрос на удаление фильма с id {}", id);
+        filmStorage.deleteFilm(id);
+        log.info("Фильм с id {} успешно удален", id);
+    }
 }

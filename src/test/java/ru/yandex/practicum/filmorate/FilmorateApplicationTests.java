@@ -394,16 +394,16 @@ class FilmorateApplicationTests {
                 .build());
 
         // Film1 получает 2 лайка, Film2 получает 0 лайков
-        filmStorage.likeFilm(film1.getId(), 1L);
-        filmStorage.likeFilm(film1.getId(), 2L);
+        filmStorage.likeFilm(film2.getId(), 1L);
+        filmStorage.likeFilm(film2.getId(), 2L);
 
         // Act: запрашиваем популярные фильмы
         List<Film> popular = filmStorage.mostPopularFilms(10);
 
         // Assert: проверяем порядок (сначала более популярный)
         assertThat(popular).hasSize(2);
-        assertThat(popular.get(0).getId()).isEqualTo(film1.getId());
-        assertThat(popular.get(1).getId()).isEqualTo(film2.getId());
+        assertThat(popular.get(0).getId()).isEqualTo(film2.getId());
+        assertThat(popular.get(1).getId()).isEqualTo(film1.getId());
     }
 
     private Mpa createMpa(String name) {
