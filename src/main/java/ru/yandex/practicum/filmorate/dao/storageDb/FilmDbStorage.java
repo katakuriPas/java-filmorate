@@ -159,10 +159,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public void deleteFilm(Long id) {
-        String DELETE_FILM = "DELETE FROM films WHERE id = ?";
+
+        String sql = "DELETE FROM films WHERE id = ?";
 
         try {
-            int rowsAffected = jdbc.update(DELETE_FILM, id);
+            int rowsAffected = jdbc.update(sql, id);
 
             if (rowsAffected == 0) {
                 throw new NotFoundException("Фильма с id " + id + " нет в базе");

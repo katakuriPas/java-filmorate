@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.BaseRepository;
-import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -78,10 +77,10 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     @Override
     public void deleteUser(Long id) {
 
-        String DELETE_USER = "DELETE FROM users WHERE id = ?";
+        String sql = "DELETE FROM users WHERE id = ?";
 
         try {
-            int rowsAffected = jdbc.update(DELETE_USER, id);
+            int rowsAffected = jdbc.update(sql, id);
 
             if (rowsAffected == 0) {
                 throw new NotFoundException("Пользователя с id " + id + " нет в базе");
