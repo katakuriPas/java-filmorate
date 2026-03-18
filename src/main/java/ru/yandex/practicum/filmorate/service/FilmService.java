@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -25,6 +26,7 @@ public class FilmService {
 
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
 
     public Collection<Film> findAllFilm() {
         log.info("Запрос на получение всех фильмов");
@@ -51,6 +53,15 @@ public class FilmService {
                     throw new ValidationException("ID жанра должен быть указан");
                 }
                 genreService.getGenreById(genre.getId());
+            }
+        }
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            for (Director director : film.getDirectors()) {
+                if (director.getId() == null) {
+                    throw new ValidationException("ID режиссёра должен быть указан");
+                }
+                directorService.getDirectorById(director.getId());
             }
         }
 
@@ -107,6 +118,16 @@ public class FilmService {
 
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Запрос фильмов режиссёра id={} с сортировкой {}", directorId, sortBy);
+        directorService.getDirectorById(directorId);
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return filmStorage.getFilmsByDirectorSortedByYear(directorId);
+        } else { // по умолчанию likes
+            return filmStorage.getFilmsByDirectorSortedByLikes(directorId);
+        }
     }
 
     private void validateFilm(Film film) {
