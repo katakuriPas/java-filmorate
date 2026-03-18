@@ -64,4 +64,11 @@ class FilmController {
     ) {
         return filmService.mostPopularFilms(count);
     }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(
+            @RequestParam String query,
+            @RequestParam String by) {
+        return filmService.searchFilms(query, by);
+    }
 }

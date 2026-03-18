@@ -25,6 +25,7 @@ public class FilmService {
 
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
 
     public Collection<Film> findAllFilm() {
         log.info("Запрос на получение всех фильмов");
@@ -51,6 +52,15 @@ public class FilmService {
                     throw new ValidationException("ID жанра должен быть указан");
                 }
                 genreService.getGenreById(genre.getId());
+            }
+        }
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            for (var director : film.getDirectors()) {
+                if (director.getId() == null) {
+                    throw new ValidationException("ID режиссёра должен быть указан");
+                }
+                directorService.getDirectorById(director.getId());
             }
         }
 
@@ -107,6 +117,36 @@ public class FilmService {
 
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("Параметр query не может быть пустым");
+        }
+
+        if (by == null || by.isBlank()) {
+            throw new ValidationException("Параметр by не может быть пустым");
+        }
+
+        // Проверяем корректность параметра by
+        String[] searchBy = by.toLowerCase().split(",");
+        boolean valid = false;
+        for (String s : searchBy) {
+            s = s.trim();
+            if (s.equals("title") || s.equals("director")) {
+                valid = true;
+            } else {
+                throw new ValidationException("Параметр by может содержать только 'title' и/или 'director'");
+            }
+        }
+
+        if (!valid) {
+            throw new ValidationException("Параметр by должен содержать 'title' и/или 'director'");
+        }
+
+        return filmStorage.searchFilms(query, by);
     }
 
     private void validateFilm(Film film) {

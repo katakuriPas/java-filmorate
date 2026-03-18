@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.time.LocalDate;
 import java.util.*;
 
+
 @Component
 @Profile("memory")
 @Slf4j
@@ -69,8 +70,64 @@ public class InMemoryFilmStorage implements FilmStorage {
         existingFilm.setReleaseDate(newFilm.getReleaseDate());
         existingFilm.setDuration(newFilm.getDuration());
 
+        if (newFilm.getDirectors() != null) {
+            existingFilm.setDirectors(newFilm.getDirectors());
+        }
+
         log.info("Фильм с id = {} успешно обновлён", newFilm.getId());
         return existingFilm;
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, String by) {
+        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        String[] searchBy = by.toLowerCase().split(",");
+
+        // Создаем обычные переменные
+        boolean searchByTitle = false;
+        boolean searchByDirector = false;
+
+        for (String s : searchBy) {
+            s = s.trim();
+            if (s.equals("title")) {
+                searchByTitle = true;
+            } else if (s.equals("director")) {
+                searchByDirector = true;
+            }
+        }
+
+        // СОЗДАЕМ FINAL КОПИИ для использования в лямбде. Нельзя использовать переменную внутри лямбда-выражения,
+        // которая изменяется где-то в коде.
+        final boolean finalSearchByTitle = searchByTitle;
+        final boolean finalSearchByDirector = searchByDirector;
+
+        String lowerQuery = query.toLowerCase();
+
+        return films.values().stream()
+                .filter(film -> {
+                    boolean matchByTitle = finalSearchByTitle &&
+                            film.getName().toLowerCase().contains(lowerQuery);
+
+                    boolean matchByDirector = finalSearchByDirector &&
+                            film.getDirectors() != null &&
+                            film.getDirectors().stream()
+                                    .anyMatch(d -> d.getName().toLowerCase().contains(lowerQuery));
+
+                    if (finalSearchByTitle && finalSearchByDirector) {
+                        return matchByTitle || matchByDirector;
+                    } else if (finalSearchByTitle) {
+                        return matchByTitle;
+                    } else if (finalSearchByDirector) {
+                        return matchByDirector;
+                    }
+                    return false;
+                })
+                .toList();
     }
 
     private void validateFilm(Film film) {

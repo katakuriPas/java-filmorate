@@ -5,11 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
 @Builder
-public class Mpa {
+@NoArgsConstructor
+@AllArgsConstructor
+public class Director {
     private Long id;
     private String name;
 }
