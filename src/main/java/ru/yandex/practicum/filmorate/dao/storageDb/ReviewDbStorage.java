@@ -56,6 +56,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
         );
 
         review.setReviewId(id);
+        review.setUseful(useful);
         return review;
     }
 
@@ -72,6 +73,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
                 newReview.getReviewId()
         );
 
+        newReview.setUseful(useful);
         return newReview;
     }
 

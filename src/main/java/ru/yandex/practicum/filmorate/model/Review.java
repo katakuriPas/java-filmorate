@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +28,7 @@ public class Review {
     @Min(value = 1, message = "Id фильма должен быть положительным")
     private Long filmId;
 
-    @Builder.Default
-    private Integer useful = 0;
+    @JsonProperty("useful")
+    private Integer useful;
 
 }
