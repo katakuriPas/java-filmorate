@@ -8,14 +8,11 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.mappers.*;
 import ru.yandex.practicum.filmorate.dao.storageDb.*;
-import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.GenreMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.MpaMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -37,7 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         UserMapper.class,
         FilmMapper.class,
         MpaMapper.class,
-        GenreMapper.class
+        GenreMapper.class,
+        DirectorMapper.class
 })
 class FilmorateApplicationTests {
 
@@ -58,6 +56,8 @@ class FilmorateApplicationTests {
         jdbc.update("DELETE FROM friendship_status");
         jdbc.update("DELETE FROM genre");
         jdbc.update("DELETE FROM mpa");
+        jdbc.update("DELETE FROM film_directors");
+        jdbc.update("DELETE FROM directors");
 
         jdbc.update("ALTER TABLE users ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE films ALTER COLUMN id RESTART WITH 1");
