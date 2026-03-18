@@ -117,4 +117,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> mostPopularFilms(Integer count) {
         return List.of();
     }
+
+    @Override
+    public void deleteFilm(Long id) {
+//        Заглушка. По ТЗ класса не должно быть, но раз есть...
+    }
 }
