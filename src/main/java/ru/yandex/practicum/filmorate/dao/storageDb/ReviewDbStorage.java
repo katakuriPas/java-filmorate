@@ -34,7 +34,6 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String DECREMENT_RATING = "UPDATE reviews SET useful_count = useful_count - 1 WHERE id = ?";
     private static final String CHECK_EXISTING_VOTE = "SELECT is_like FROM reviews_likes WHERE review_id = ? AND user_id = ?";
 
-
     private final ReviewMapper reviewMapper;
 
     public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper, ReviewMapper reviewMapper) {
@@ -112,7 +111,6 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
         try {
             vote = jdbc.queryForObject(CHECK_EXISTING_VOTE, Boolean.class, reviewId, userId);
         } catch (EmptyResultDataAccessException e) {
-
         }
 
         jdbc.update(UPSERT_LIKE, reviewId, userId, isLike);
@@ -151,7 +149,6 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
             }
         }
     }
-
 
     public List<Review> findAll() {
         return findMany(FIND_ALL);
