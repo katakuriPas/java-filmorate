@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.storageDb;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @Profile("database")
 public class ReviewDbStorage extends BaseRepository<Review> implements ReviewStorage {
@@ -107,11 +109,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public void setLike(Long reviewId, Long userId, Boolean isLike) {
-        Boolean vote = null;
-        try {
-            vote = jdbc.queryForObject(CHECK_EXISTING_VOTE, Boolean.class, reviewId, userId);
-        } catch (EmptyResultDataAccessException e) {
-        }
+        Boolean vote = getExistingVote(reviewId, userId);
 
         jdbc.update(UPSERT_LIKE, reviewId, userId, isLike);
 
@@ -132,12 +130,8 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public void removeLike(Long reviewId, Long userId) {
-        Boolean vote = null;
-        try {
-            vote = jdbc.queryForObject(CHECK_EXISTING_VOTE, Boolean.class, reviewId, userId);
-        } catch (EmptyResultDataAccessException e) {
-            return;
-        }
+        Boolean vote = getExistingVote(reviewId, userId);
+        if (vote == null) return;
 
         jdbc.update(DELETE_LIKE, reviewId, userId);
 
@@ -156,5 +150,14 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     public Optional<Review> findById(Long id) {
         return findOne(FIND_BY_ID, id);
+    }
+
+    private Boolean getExistingVote(Long reviewId, Long userId) {
+        try {
+            return jdbc.queryForObject(CHECK_EXISTING_VOTE, Boolean.class, reviewId, userId);
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("Голос не найден: reviewId={}, userId={}", reviewId, userId);
+            return null;
+        }
     }
 }
