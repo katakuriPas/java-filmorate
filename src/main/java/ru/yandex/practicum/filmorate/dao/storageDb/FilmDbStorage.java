@@ -276,17 +276,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
-
-        if ("year".equalsIgnoreCase(sortBy)) {
-            return getFilmsByDirectorSortedByYear(directorId);
-        } else {
-            return getFilmsByDirectorSortedByLikes(directorId);
-        }
-    }
-
-    @Override
     public void deleteFilm(Long id) {
 
         String sql = "DELETE FROM films WHERE id = ?";
@@ -320,5 +309,42 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
         film.setDirectors(new HashSet<>(directors));
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
+
+        String sql;
+        if ("year".equals(sortBy)) {
+            sql = "SELECT f.*, m.name as mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_directors fd ON f.id = fd.film_id " +
+                    "WHERE fd.director_id = ? " +
+                    "ORDER BY f.release_date";
+        } else { // likes
+            sql = "SELECT f.*, m.name as mpa_name, COUNT(fl.user_id) as likes_count " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_directors fd ON f.id = fd.film_id " +
+                    "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                    "WHERE fd.director_id = ? " +
+                    "GROUP BY f.id " +
+                    "ORDER BY likes_count DESC";
+        }
+
+        List<Film> films = jdbc.query(sql, filmMapper, directorId);
+
+        for (Film film : films) {
+            List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+            film.setGenres(new HashSet<>(genres));
+
+            List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
+            film.setDirectors(new HashSet<>(directors));
+        }
+
+        log.info("Найдено {} фильмов для режиссёра {}", films.size(), directorId);
+        return films;
     }
 }
