@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.time.LocalDate;
 import java.util.*;
 
-
 @Component
 @Profile("memory")
 @Slf4j
@@ -192,5 +191,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public void deleteFilm(Long id) {
 //        Заглушка. По ТЗ класса не должно быть, но раз есть...
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        // Заглушка
+        throw new UnsupportedOperationException(
+                "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
     }
 }

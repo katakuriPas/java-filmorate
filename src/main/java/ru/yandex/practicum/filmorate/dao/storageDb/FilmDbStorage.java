@@ -276,6 +276,17 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
+
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return getFilmsByDirectorSortedByYear(directorId);
+        } else {
+            return getFilmsByDirectorSortedByLikes(directorId);
+        }
+    }
+
+    @Override
     public void deleteFilm(Long id) {
 
         String sql = "DELETE FROM films WHERE id = ?";
@@ -311,4 +322,3 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         film.setDirectors(new HashSet<>(directors));
     }
 }
-
