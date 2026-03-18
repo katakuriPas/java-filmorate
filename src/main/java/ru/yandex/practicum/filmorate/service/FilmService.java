@@ -58,9 +58,6 @@ public class FilmService {
 
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             for (Director director : film.getDirectors()) {
-                if (director.getId() == null) {
-                    throw new ValidationException("ID режиссёра должен быть указан");
-                }
                 directorService.getDirectorById(director.getId());
             }
         }
