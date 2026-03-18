@@ -42,6 +42,7 @@ public class DirectorDbStorage extends BaseRepository<Director> {
         return director;
     }
 
+
     public Director update(Director director) {
         update(UPDATE, director.getName(), director.getId());
         return director;
