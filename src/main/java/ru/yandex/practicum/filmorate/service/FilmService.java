@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -57,7 +56,10 @@ public class FilmService {
         }
 
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
-            for (Director director : film.getDirectors()) {
+            for (var director : film.getDirectors()) {
+                if (director.getId() == null) {
+                    throw new ValidationException("ID режиссёра должен быть указан");
+                }
                 directorService.getDirectorById(director.getId());
             }
         }
@@ -114,6 +116,36 @@ public class FilmService {
     public List<Film> mostPopularFilms(Integer count) {
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("Параметр query не может быть пустым");
+        }
+
+        if (by == null || by.isBlank()) {
+            throw new ValidationException("Параметр by не может быть пустым");
+        }
+
+        // Проверяем корректность параметра by
+        String[] searchBy = by.toLowerCase().split(",");
+        boolean valid = false;
+        for (String s : searchBy) {
+            s = s.trim();
+            if (s.equals("title") || s.equals("director")) {
+                valid = true;
+            } else {
+                throw new ValidationException("Параметр by может содержать только 'title' и/или 'director'");
+            }
+        }
+
+        if (!valid) {
+            throw new ValidationException("Параметр by должен содержать 'title' и/или 'director'");
+        }
+
+        return filmStorage.searchFilms(query, by);
     }
 
     public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
