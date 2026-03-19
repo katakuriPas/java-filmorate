@@ -83,7 +83,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name " +
                     "ORDER BY likes_count DESC";
 
-    private static final String GENERAL_MOVIES =  """
+    private static final String GENERAL_MOVIES = """
             SELECT f.*, m.name AS mpa_name
                     FROM films f
                     LEFT JOIN mpa m ON f.mpa_id = m.id

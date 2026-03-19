@@ -28,5 +28,5 @@ public interface FilmStorage {
 
     void deleteFilm(Long id);
 
-    List<Film> getGeneralMovies (Long user_id1, Long user_id2);
+    List<Film> getGeneralMovies(Long user_id1, Long user_id2);
 }
