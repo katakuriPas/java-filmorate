@@ -127,6 +127,10 @@ public class FilmService {
         }
     }
 
+    public List<Film> getGeneralMovies(Long user_id1, Long user_id2) {
+        return filmStorage.getGeneralMovies(user_id1, user_id2);
+    }
+
     private void validateFilm(Film film) {
         if (film == null) {
             throw new ValidationException("Фильм не может быть null");
