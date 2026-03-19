@@ -119,6 +119,16 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getFilmsByDirectorSortedByYear(Long directorId) {
+        return List.of();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByLikes(Long directorId) {
+        return List.of();
+    }
+
+    @Override
     public void deleteFilm(Long id) {
 //        Заглушка. По ТЗ класса не должно быть, но раз есть...
     }

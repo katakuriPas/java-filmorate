@@ -3,9 +3,11 @@
 -- ============================================
 DROP TABLE IF EXISTS film_likes;
 DROP TABLE IF EXISTS film_genres;
+DROP TABLE IF EXISTS film_directors;
 DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS films;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS directors;
 DROP TABLE IF EXISTS friendship_status;
 DROP TABLE IF EXISTS genre;
 DROP TABLE IF EXISTS mpa;
@@ -61,6 +63,21 @@ CREATE TABLE IF NOT EXISTS film_genres (
     PRIMARY KEY (film_id, genre_id),
     CONSTRAINT fk_film_genres_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
     CONSTRAINT fk_film_genres_genre FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE CASCADE
+);
+
+-- Таблица режиссёров
+CREATE TABLE IF NOT EXISTS directors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Связь фильмов и режиссёров (многие-ко-многим)
+CREATE TABLE IF NOT EXISTS film_directors (
+    film_id BIGINT NOT NULL,
+    director_id BIGINT NOT NULL,
+    PRIMARY KEY (film_id, director_id),
+    CONSTRAINT fk_film_directors_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    CONSTRAINT fk_film_directors_director FOREIGN KEY (director_id) REFERENCES directors(id) ON DELETE CASCADE
 );
 
 -- Лайки фильмов (ИСПРАВЛЕНО: like_films -> film_likes)
