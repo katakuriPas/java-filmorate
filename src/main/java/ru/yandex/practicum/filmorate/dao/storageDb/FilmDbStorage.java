@@ -244,8 +244,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> getGeneralMovies(Long first_user, Long second_user) {
-        List<Film> films = jdbc.query(GENERAL_MOVIES, filmMapper, first_user, second_user);
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        List<Film> films = jdbc.query(GENERAL_MOVIES, filmMapper, firstUser, secondUser);
         films.forEach(this::loadGenresAndDirectors);
         return films;
     }

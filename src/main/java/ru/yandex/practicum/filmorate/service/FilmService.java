@@ -127,8 +127,8 @@ public class FilmService {
         }
     }
 
-    public List<Film> getGeneralMovies(Long first_user, Long second_user) {
-        return filmStorage.getGeneralMovies(first_user, second_user);
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return filmStorage.getGeneralMovies(firstUser, secondUser);
     }
 
     private void validateFilm(Film film) {
