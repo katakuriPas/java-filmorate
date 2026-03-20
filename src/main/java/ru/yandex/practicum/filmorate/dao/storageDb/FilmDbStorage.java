@@ -347,4 +347,40 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         log.info("Найдено {} фильмов для режиссёра {}", films.size(), directorId);
         return films;
     }
+
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        String sql = """
+        WITH similar_users AS (
+            SELECT fl2.user_id, COUNT(fl2.film_id) as common_count
+            FROM film_likes fl1
+            JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
+            WHERE fl1.user_id = ? AND fl2.user_id != ?
+            GROUP BY fl2.user_id
+            ORDER BY common_count DESC
+            LIMIT 3
+        )
+        SELECT DISTINCT f.*, m.name as mpa_name
+        FROM films f
+        LEFT JOIN mpa m ON f.mpa_id = m.id
+        WHERE EXISTS (SELECT 1 FROM similar_users)  -- ← КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
+          AND f.id IN (
+            SELECT fl.film_id
+            FROM film_likes fl
+            WHERE fl.user_id IN (SELECT user_id FROM similar_users)
+              AND fl.film_id NOT IN (
+                  SELECT film_id FROM film_likes WHERE user_id = ?
+              )
+        )
+        ORDER BY (
+            SELECT COUNT(*)
+            FROM film_likes fl2
+            WHERE fl2.film_id = f.id
+              AND fl2.user_id IN (SELECT user_id FROM similar_users)
+        ) DESC
+        LIMIT 10
+        """;
+
+        return jdbc.query(sql, filmMapper, userId, userId, userId);
+    }
 }
