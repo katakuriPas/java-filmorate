@@ -59,9 +59,24 @@ class FilmController {
 
     @GetMapping("/popular")
     public List<Film> mostPopularFilms(
-            @RequestParam(defaultValue = "10")
-            @Positive Integer count
+            @RequestParam(defaultValue = "10") @Positive Integer count,
+            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false) Integer year
     ) {
-        return filmService.mostPopularFilms(count);
+        if (genreId == null && year == null) {
+            return filmService.mostPopularFilms(count); // старый метод
+        }
+        return filmService.mostPopularFilms(count, genreId, year); // новый метод
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable Long directorId,
+                                         @RequestParam(defaultValue = "likes") String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable Long id) {
+        filmService.deleteFilm(id);
     }
 }

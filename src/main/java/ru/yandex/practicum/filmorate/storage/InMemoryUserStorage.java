@@ -124,4 +124,9 @@ public class InMemoryUserStorage implements UserStorage {
                 .orElse(0);
         return ++currentMaxId;
     }
+
+    @Override
+    public void deleteUser(Long id) {
+//        Заглушка. По ТЗ это класса быть не должно, на раз есть...
+    }
 }

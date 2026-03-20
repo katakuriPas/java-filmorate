@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -116,5 +115,25 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Film> mostPopularFilms(Integer count) {
         return List.of();
+    }
+
+    @Override
+    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
+        return List.of();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByYear(Long directorId) {
+        return List.of();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirectorSortedByLikes(Long directorId) {
+        return List.of();
+    }
+
+    @Override
+    public void deleteFilm(Long id) {
+//        Заглушка. По ТЗ класса не должно быть, но раз есть...
     }
 }

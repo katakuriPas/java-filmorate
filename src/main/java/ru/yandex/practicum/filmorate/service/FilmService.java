@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -25,6 +26,7 @@ public class FilmService {
 
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
 
     public Collection<Film> findAllFilm() {
         log.info("Запрос на получение всех фильмов");
@@ -51,6 +53,12 @@ public class FilmService {
                     throw new ValidationException("ID жанра должен быть указан");
                 }
                 genreService.getGenreById(genre.getId());
+            }
+        }
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            for (Director director : film.getDirectors()) {
+                directorService.getDirectorById(director.getId());
             }
         }
 
@@ -104,9 +112,30 @@ public class FilmService {
     }
 
     public List<Film> mostPopularFilms(Integer count) {
-
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
+        log.info("Запрос на получение {} популярных фильмов, жанр={}, год={}", count, genreId, year);
+
+        if (genreId != null) {
+            genreService.getGenreById(genreId);
+        }
+        if (year != null && year < 1895) {
+            throw new ValidationException("Год должен быть от 1895");
+        }
+        return filmStorage.mostPopularFilms(count, genreId, year);
+    }
+
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Запрос фильмов режиссёра id={} с сортировкой {}", directorId, sortBy);
+        directorService.getDirectorById(directorId);
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return filmStorage.getFilmsByDirectorSortedByYear(directorId);
+        } else { // по умолчанию likes
+            return filmStorage.getFilmsByDirectorSortedByLikes(directorId);
+        }
     }
 
     private void validateFilm(Film film) {
@@ -133,5 +162,11 @@ public class FilmService {
             log.warn("Ошибка валидации: продолжительность фильма <= 0: {}", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
+    }
+
+    public void deleteFilm(Long id) {
+        log.info("Получен запрос на удаление фильма с id {}", id);
+        filmStorage.deleteFilm(id);
+        log.info("Фильм с id {} успешно удален", id);
     }
 }

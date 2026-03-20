@@ -2,10 +2,12 @@ package ru.yandex.practicum.filmorate.dao.storageDb;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.BaseRepository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -70,5 +72,21 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     public boolean existsByLoginExcludeId(String login, Long excludeId) {
         Integer count = jdbc.queryForObject(EXISTS_BY_LOGIN_EXCLUDE_ID, Integer.class, login, excludeId);
         return count != null && count > 0;
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try {
+            int rowsAffected = jdbc.update(sql, id);
+
+            if (rowsAffected == 0) {
+                throw new NotFoundException("Пользователя с id " + id + " нет в базе");
+            }
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Ошибка при работе с БД: " + e.getMessage(), e);
+        }
     }
 }
