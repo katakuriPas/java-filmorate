@@ -25,7 +25,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String FIND_BY_ID = "SELECT * FROM reviews WHERE id = ?";
     private static final String FIND_ALL = "SELECT * FROM reviews ORDER BY useful_count DESC FETCH FIRST ? ROWS ONLY";
     private static final String INSERT = "INSERT INTO reviews (content, is_positive, user_id, film_id, useful_count) VALUES (?, ?, ?, ?, ?)";
-    private static final String UPDATE = "UPDATE reviews SET content = ?, is_positive = ?, user_id = ?, film_id = ?, useful_count = ? WHERE id = ?";
+    private static final String UPDATE = "UPDATE reviews SET content = ?, is_positive = ? WHERE id = ?";
     private static final String DELETE_REVIEW = "DELETE FROM reviews WHERE id = ?";
     private static final String FIND_BY_FILM_ID = "SELECT * FROM reviews WHERE film_id = ? ORDER BY useful_count DESC FETCH FIRST ? ROWS ONLY";
 
@@ -62,19 +62,15 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public Review updateReview(Review newReview) {
-        Integer useful = newReview.getUseful() != null ? newReview.getUseful() : 0;
 
         update(UPDATE,
                 newReview.getContent(),
                 newReview.getIsPositive(),
-                newReview.getUserId(),
-                newReview.getFilmId(),
-                useful,
                 newReview.getReviewId()
         );
 
-        newReview.setUseful(useful);
-        return newReview;
+        return findOne(FIND_BY_ID, newReview.getReviewId())
+                .orElseThrow(() -> new NotFoundException("Отзыв не найден"));
     }
 
     @Override
