@@ -5,6 +5,8 @@ DROP TABLE IF EXISTS film_likes;
 DROP TABLE IF EXISTS film_genres;
 DROP TABLE IF EXISTS film_directors;
 DROP TABLE IF EXISTS friends;
+DROP TABLE IF EXISTS reviews_likes;
+DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS films;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS directors;
@@ -99,6 +101,29 @@ CREATE TABLE IF NOT EXISTS friends (
     CONSTRAINT fk_friends_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_friends_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_friends_status FOREIGN KEY (status_id) REFERENCES friendship_status(id)
+);
+
+-- Таблица отзывов
+CREATE TABLE IF NOT EXISTS reviews (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    is_positive BOOLEAN DEFAULT TRUE,
+    user_id BIGINT NOT NULL,
+    film_id BIGINT NOT NULL,
+    useful_count INT DEFAULT 0,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reviews_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    user_id BIGINT NOT NULL,
+    review_id BIGINT NOT NULL,
+    is_like BOOLEAN,
+
+    PRIMARY KEY (user_id, review_id),
+
+    CONSTRAINT fk_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_likes_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 );
 
 -- ============================================
