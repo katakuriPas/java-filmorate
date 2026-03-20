@@ -21,13 +21,17 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
 
     public Review createReview(Review review) {
+        log.info("Получен запрос на добавление отзыва");
+
         Long userId = review.getUserId();
         Long filmId = review.getFilmId();
 
         validateReviewFormat(review);
         validateIds(filmId, userId);
+        Review newReview = reviewStorage.createReview(review);
 
-        return reviewStorage.createReview(review);
+        log.info("Отзыв добавлен с id  {}", newReview.getReviewId());
+        return newReview;
     }
 
     public Review updateReview(Review newReview) {

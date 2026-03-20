@@ -178,6 +178,6 @@ CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
 
 --Отзывы
 CREATE TRIGGER IF NOT EXISTS review
-BEFORE INSERT, UPDATE ON reviews
+BEFORE INSERT, UPDATE, DELETE ON reviews
 FOR EACH ROW
 CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";

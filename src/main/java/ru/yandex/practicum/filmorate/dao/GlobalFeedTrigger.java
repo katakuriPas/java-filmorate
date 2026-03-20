@@ -1,11 +1,13 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.extern.slf4j.Slf4j;
 import org.h2.api.Trigger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+@Slf4j
 public class GlobalFeedTrigger implements Trigger {
     private String tableName;
 
@@ -18,7 +20,6 @@ public class GlobalFeedTrigger implements Trigger {
 
     @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
-        System.out.println("TRIGGER");
         Long userId = 0L;
         String eventType = "";
         String operation = "";
@@ -49,9 +50,9 @@ public class GlobalFeedTrigger implements Trigger {
                 entityId = (Long) row[1];
             }
             case "REVIEWS" -> {
-                userId = (Long) row[4];
+                userId = (Long) row[3];
                 eventType = "REVIEW";
-                entityId = (Long) row[5];
+                entityId = (Long) row[0];
             }
         }
 
@@ -63,6 +64,8 @@ public class GlobalFeedTrigger implements Trigger {
             ps.setString(4, operation);
             ps.executeUpdate();
         }
+
+        log.info("Данные об изменение таблицы {} успешно залогированы", this.tableName);
     }
 
     @Override
@@ -73,9 +76,3 @@ public class GlobalFeedTrigger implements Trigger {
     public void remove() {
     }
 }
-
-
-//        "userId": 123,
-//        "eventType": "LIKE", // одно из значениий LIKE, REVIEW или FRIEND
-//        "operation": "REMOVE", // одно из значениий REMOVE, ADD, UPDATE
-//        "entityId": 1234   // идентификатор сущности, с которой произошло событие
