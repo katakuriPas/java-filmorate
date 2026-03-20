@@ -49,6 +49,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "ORDER BY (SELECT COUNT(*) FROM film_likes fl WHERE fl.film_id = f.id) DESC " +
                     "FETCH FIRST ? ROWS ONLY";
 
+    private static final String MOST_POPULAR_FILMS_WITH_FILTER =
+            "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name as mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "WHERE (? IS NULL OR YEAR(f.release_date) = ?) " +
+                    "  AND (? IS NULL OR EXISTS (SELECT 1 FROM film_genres fg WHERE fg.film_id = f.id AND fg.genre_id = ?)) " +
+                    "ORDER BY (SELECT COUNT(*) FROM film_likes fl WHERE fl.film_id = f.id) DESC " +
+                    "FETCH FIRST ? ROWS ONLY";
+
     private static final String FIND_GENRES_BY_FILM_ID =
             "SELECT g.* FROM genre g " +
                     "JOIN film_genres fg ON g.id = fg.genre_id " +
@@ -138,6 +147,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public List<Film> mostPopularFilms(Integer count) {
         return jdbc.query(MOST_POPULAR_FILMS, filmMapper, Objects.requireNonNullElse(count, LIMIT_FILMS));
+    }
+
+    @Override
+    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
+        List<Film> films = jdbc.query(MOST_POPULAR_FILMS_WITH_FILTER, filmMapper, year, year, genreId, genreId, count);
+        films.forEach(this::loadGenresAndDirectors);
+        return films;
     }
 
     @Override
