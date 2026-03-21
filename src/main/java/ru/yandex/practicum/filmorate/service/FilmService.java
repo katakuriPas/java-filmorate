@@ -112,9 +112,20 @@ public class FilmService {
     }
 
     public List<Film> mostPopularFilms(Integer count) {
-
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
+        log.info("Запрос на получение {} популярных фильмов, жанр={}, год={}", count, genreId, year);
+
+        if (genreId != null) {
+            genreService.getGenreById(genreId);
+        }
+        if (year != null && year < 1895) {
+            throw new ValidationException("Год должен быть от 1895");
+        }
+        return filmStorage.mostPopularFilms(count, genreId, year);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {

@@ -97,7 +97,6 @@ public class InMemoryUserStorage implements UserStorage {
         return true;
     }
 
-
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("Ошибка валидации: email не указан или не содержит @");
