@@ -206,3 +206,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         return List.of(); // Возвращаем пустой список
     }
 }
+}
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return List.of();
+    }
+}
