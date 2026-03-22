@@ -323,7 +323,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         films.forEach(this::loadGenresAndDirectors);
         return films;
     }
-}
 
     private void saveFilmDirectors(Long filmId, Set<Director> directors) {
         jdbc.update(DELETE_FILM_DIRECTORS, filmId);
