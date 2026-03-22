@@ -31,8 +31,8 @@ public class DirectorController {
     }
 
     @PutMapping
-    public Director updateDirector(@RequestBody Director director) {
-        return directorService.updateDirector(director);
+    public Director updateDirector(@RequestBody Director newDirector) {
+        return directorService.updateDirector(newDirector);
     }
 
     @DeleteMapping("/{id}")

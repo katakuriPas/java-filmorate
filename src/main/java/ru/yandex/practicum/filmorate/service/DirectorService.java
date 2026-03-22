@@ -23,30 +23,39 @@ public class DirectorService {
     }
 
     public Director getDirectorById(Long id) {
-        log.info("Запрос режиссёра с id={}", id);
+        log.info("Запрос режиссера с id={}", id);
         return directorDbStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException("Режиссёр с id=" + id + " не найден"));
     }
 
-
     public Director createDirector(Director director) {
         log.info("Создание режиссера: {}", director.getName());
+
+        if (director.getName() == null || director.getName().isBlank()) {
+            throw new ValidationException("Имя режиссёра не может быть пустым");
+        }
         return directorDbStorage.create(director);
     }
 
     public Director updateDirector(Director director) {
+        log.info("Обновление режиссера: {}", director.getName());
+
         if (director.getId() == null) {
-            throw new ValidationException("ID режиссёра должен быть указан");
+            throw new ValidationException("ID режиссера должен быть указан");
         }
         getDirectorById(director.getId());
-        log.info("Обновление режиссёра с id={}", director.getId());
+
+        if (director.getName() == null || director.getName().isBlank()) {
+            throw new ValidationException("Имя режиссера не может быть пустым");
+        }
+
         return directorDbStorage.update(director);
     }
 
     public void deleteDirector(Long id) {
         log.info("Удаление режиссёра с id={}", id);
         getDirectorById(id);
-        directorDbStorage.delete(id);
 
+        directorDbStorage.delete(id);
     }
 }
