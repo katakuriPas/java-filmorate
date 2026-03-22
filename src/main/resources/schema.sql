@@ -1,9 +1,9 @@
 -- ============================================
 -- 1. ОЧИСТКА: Удаляем таблицы в правильном порядке
 -- ============================================
+DROP TABLE IF EXISTS film_directors;
 DROP TABLE IF EXISTS film_likes;
 DROP TABLE IF EXISTS film_genres;
-DROP TABLE IF EXISTS film_directors;
 DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS reviews_likes;
 DROP TABLE IF EXISTS reviews;
@@ -48,6 +48,13 @@ CREATE TABLE IF NOT EXISTS friendship_status (
     friendshipStatus VARCHAR(20) NOT NULL UNIQUE
 );
 
+-- Таблица режиссёров
+CREATE TABLE IF NOT EXISTS directors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    CONSTRAINT directors_name_unique UNIQUE (name)
+);
+
 -- Таблица фильмов
 CREATE TABLE IF NOT EXISTS films (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -66,12 +73,6 @@ CREATE TABLE IF NOT EXISTS film_genres (
     PRIMARY KEY (film_id, genre_id),
     CONSTRAINT fk_film_genres_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
     CONSTRAINT fk_film_genres_genre FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE CASCADE
-);
-
--- Таблица режиссёров
-CREATE TABLE IF NOT EXISTS directors (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
 );
 
 -- Связь фильмов и режиссёров (многие-ко-многим)

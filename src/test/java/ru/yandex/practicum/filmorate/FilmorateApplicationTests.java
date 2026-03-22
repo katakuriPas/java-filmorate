@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         FilmDbStorage.class,
         GenreDbStorage.class,
         MpaDbStorage.class,
+        DirectorDbStorage.class,
         UserMapper.class,
         FilmMapper.class,
         MpaMapper.class,
@@ -44,15 +45,18 @@ class FilmorateApplicationTests {
     private final FriendshipDbStorage friendshipStorage;
     private final GenreDbStorage genreStorage;
     private final MpaDbStorage mpaStorage;
+    private final DirectorDbStorage directorStorage;
     private final JdbcTemplate jdbc;
 
     @BeforeEach
     void cleanUp() {
+        jdbc.update("DELETE FROM film_directors");
         jdbc.update("DELETE FROM film_likes");
         jdbc.update("DELETE FROM film_genres");
         jdbc.update("DELETE FROM friends");
         jdbc.update("DELETE FROM films");
         jdbc.update("DELETE FROM users");
+        jdbc.update("DELETE FROM directors");
         jdbc.update("DELETE FROM friendship_status");
         jdbc.update("DELETE FROM genre");
         jdbc.update("DELETE FROM mpa");
@@ -61,6 +65,7 @@ class FilmorateApplicationTests {
 
         jdbc.update("ALTER TABLE users ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE films ALTER COLUMN id RESTART WITH 1");
+        jdbc.update("ALTER TABLE directors ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE genre ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE mpa ALTER COLUMN id RESTART WITH 1");
 
