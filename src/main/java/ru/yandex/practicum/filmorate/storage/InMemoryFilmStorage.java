@@ -199,6 +199,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         throw new UnsupportedOperationException(
                 "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
     }
+
     public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
         return List.of();
     }
