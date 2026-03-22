@@ -130,11 +130,11 @@ CREATE TABLE IF NOT EXISTS reviews_likes (
 --Лента событий
 CREATE TABLE IF NOT EXISTS feed (
 	event_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+	user_id BIGINT NOT NULL,
 	event_type VARCHAR(10) NOT NULL,
 	entity_id BIGINT NOT NULL,
 	operation VARCHAR(10) NOT NULL,
-	time_and_data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	time_and_data BIGINT NOT NULL
 );
 
 -- ============================================
@@ -164,20 +164,20 @@ INSERT INTO friendship_status (friendshipStatus) SELECT 'ACCEPTED' WHERE NOT EXI
 --Запус триггера
 -- ============================================
 
---Лайки
-CREATE TRIGGER IF NOT EXISTS likes
-BEFORE INSERT, UPDATE, DELETE ON film_likes
-FOR EACH ROW
-CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
-
---Друзья
-CREATE TRIGGER IF NOT EXISTS friend
-BEFORE INSERT, UPDATE, DELETE ON friends
-FOR EACH ROW
-CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
-
---Отзывы
-CREATE TRIGGER IF NOT EXISTS review
-BEFORE INSERT, UPDATE, DELETE ON reviews
-FOR EACH ROW
-CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+----Лайки
+--CREATE TRIGGER IF NOT EXISTS likes
+--BEFORE INSERT, UPDATE, DELETE ON film_likes
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Друзья
+--CREATE TRIGGER IF NOT EXISTS friend
+--BEFORE INSERT, UPDATE, DELETE ON friends
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Отзывы
+--CREATE TRIGGER IF NOT EXISTS review
+--BEFORE INSERT, UPDATE, DELETE ON reviews
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";

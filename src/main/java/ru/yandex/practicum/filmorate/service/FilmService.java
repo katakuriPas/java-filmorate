@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -23,6 +24,7 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final FeedStorage feedStorage;
 
     private final MpaService mpaService;
     private final GenreService genreService;
@@ -92,7 +94,7 @@ public class FilmService {
         if (userStorage.getUserById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
-
+        feedStorage.saveFeed(userId, "LIKE", filmId, "ADD");
         filmStorage.likeFilm(filmId, userId);
         log.info("Пользователь {} лайкнул фильм {}", userId, filmId);
     }
@@ -106,7 +108,7 @@ public class FilmService {
         if (userStorage.getUserById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
-
+        feedStorage.saveFeed(userId, "LIKE", filmId, "REMOVE");
         filmStorage.deleteLike(filmId, userId);
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }

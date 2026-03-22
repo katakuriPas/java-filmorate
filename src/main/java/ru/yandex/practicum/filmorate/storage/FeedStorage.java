@@ -7,4 +7,5 @@ import java.util.Collection;
 public interface FeedStorage {
 
     Collection<Feed> findFeed(Long id);
+    void saveFeed (Long id, String eventType, Long entityId, String operation);
 }
