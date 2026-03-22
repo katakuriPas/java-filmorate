@@ -92,6 +92,21 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name " +
                     "ORDER BY likes_count DESC";
 
+    private static final String GENERAL_MOVIES = """
+            SELECT f.*, m.name AS mpa_name
+                    FROM films f
+                    LEFT JOIN mpa m ON f.mpa_id = m.id
+                    LEFT JOIN film_likes fl ON f.id = fl.film_id
+                    WHERE f.id IN (
+                        SELECT t1.film_id
+                        FROM film_likes t1
+                        JOIN film_likes t2 ON t1.film_id = t2.film_id
+                        WHERE t1.user_id = ? AND t2.user_id = ?
+                    )
+                    GROUP BY f.id, m.name
+                    ORDER BY COUNT(fl.user_id) DESC
+            """;
+
     private final JdbcTemplate jdbc;
     private final GenreMapper genreMapper;
     private final FilmMapper filmMapper;
@@ -242,6 +257,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         } catch (DataAccessException e) {
             throw new RuntimeException("Ошибка при работе с БД: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        List<Film> films = jdbc.query(GENERAL_MOVIES, filmMapper, firstUser, secondUser);
+        films.forEach(this::loadGenresAndDirectors);
+        return films;
     }
 }
 

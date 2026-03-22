@@ -136,4 +136,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     public void deleteFilm(Long id) {
 //        Заглушка. По ТЗ класса не должно быть, но раз есть...
     }
+
+    @Override
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return List.of();
+    }
 }
