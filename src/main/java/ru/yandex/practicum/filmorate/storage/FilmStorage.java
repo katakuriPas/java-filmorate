@@ -32,7 +32,7 @@ public interface FilmStorage {
 
     List<Film> getFilmsByDirector(Long directorId, String sortBy);
 
-    public List<Film> getRecommendations(Long userId);
+    List<Film> getRecommendations(Long userId);
 
     void deleteFilm(Long id);
 }

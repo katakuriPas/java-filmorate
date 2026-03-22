@@ -112,15 +112,7 @@ public class UserService {
 
         getUserById(userId);
 
-        List<Film> recommendations = filmStorage.getRecommendations(userId);
-
-        if (recommendations.isEmpty()) {
-            log.info("Нет рекомендаций для пользователя {}, возвращаем популярные фильмы", userId);
-            return filmStorage.mostPopularFilms(10);
-        }
-
-        log.info("Найдено {} рекомендаций для пользователя {}", recommendations.size(), userId);
-        return recommendations;
+        return filmStorage.getRecommendations(userId);
     }
 
     private void validateUser(User user) {

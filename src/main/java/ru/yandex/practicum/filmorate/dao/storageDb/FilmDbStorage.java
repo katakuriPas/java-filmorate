@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Profile("database")
@@ -350,24 +351,37 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> getRecommendations(Long userId) {
+        log.info("Получение рекомендаций для пользователя {}", userId);
+
+        String checkLikesSql = "SELECT COUNT(*) FROM film_likes WHERE user_id = ?";
+        Integer likesCount = jdbc.queryForObject(checkLikesSql, Integer.class, userId);
+
+        if (likesCount == null || likesCount == 0) {
+            log.info("У пользователя {} нет лайков, рекомендаций нет", userId);
+            return List.of();
+        }
+
+        List<Long> similarUsers = findSimilarUsers(userId);
+
+        if (similarUsers.isEmpty()) {
+            log.info("Нет похожих пользователей для id={}, возвращаем пустой список", userId);
+            return List.of();
+        }
+
+        log.info("Найдены похожие пользователи: {}", similarUsers);
+
+        String placeholders = similarUsers.stream()
+                .map(u -> "?")
+                .collect(Collectors.joining(","));
+
         String sql = """
-        WITH similar_users AS (
-            SELECT fl2.user_id, COUNT(fl2.film_id) as common_count
-            FROM film_likes fl1
-            JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
-            WHERE fl1.user_id = ? AND fl2.user_id != ?
-            GROUP BY fl2.user_id
-            ORDER BY common_count DESC
-            LIMIT 3
-        )
         SELECT DISTINCT f.*, m.name as mpa_name
         FROM films f
         LEFT JOIN mpa m ON f.mpa_id = m.id
-        WHERE EXISTS (SELECT 1 FROM similar_users)  -- ← КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
-          AND f.id IN (
+        WHERE f.id IN (
             SELECT fl.film_id
             FROM film_likes fl
-            WHERE fl.user_id IN (SELECT user_id FROM similar_users)
+            WHERE fl.user_id IN (%s)
               AND fl.film_id NOT IN (
                   SELECT film_id FROM film_likes WHERE user_id = ?
               )
@@ -376,11 +390,34 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             SELECT COUNT(*)
             FROM film_likes fl2
             WHERE fl2.film_id = f.id
-              AND fl2.user_id IN (SELECT user_id FROM similar_users)
+              AND fl2.user_id IN (%s)
         ) DESC
         LIMIT 10
+        """.formatted(placeholders, placeholders);
+
+        List<Object> params = new ArrayList<>(similarUsers);
+        params.add(userId);
+        params.addAll(similarUsers);
+
+        List<Film> films = jdbc.query(sql, filmMapper, params.toArray());
+        films.forEach(this::loadGenresAndDirectors);
+
+        log.info("Найдено {} рекомендаций для пользователя {}", films.size(), userId);
+        return films;
+    }
+
+    // Вспомогательный метод для поиска пользователей с общими лайками
+    private List<Long> findSimilarUsers(Long userId) {
+        String sql = """
+        SELECT fl2.user_id
+        FROM film_likes fl1
+        JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
+        WHERE fl1.user_id = ? AND fl2.user_id != ?
+        GROUP BY fl2.user_id
+        ORDER BY COUNT(fl2.film_id) DESC
+        LIMIT 3
         """;
 
-        return jdbc.query(sql, filmMapper, userId, userId, userId);
+        return jdbc.queryForList(sql, Long.class, userId, userId);
     }
 }
