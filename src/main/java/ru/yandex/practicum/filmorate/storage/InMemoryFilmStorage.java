@@ -205,8 +205,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.warn("Метод getRecommendations не реализован в InMemoryFilmStorage");
         return List.of(); // Возвращаем пустой список
     }
-}
-}
+  
     public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
         return List.of();
     }
