@@ -33,4 +33,6 @@ public interface FilmStorage {
     List<Film> getFilmsByDirector(Long directorId, String sortBy);
 
     void deleteFilm(Long id);
+
+    List<Film> getGeneralMovies(Long firstUser, Long secondUser);
 }

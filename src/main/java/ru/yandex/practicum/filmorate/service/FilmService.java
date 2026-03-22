@@ -170,6 +170,10 @@ public class FilmService {
         }
     }
 
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return filmStorage.getGeneralMovies(firstUser, secondUser);
+    }
+
     private void validateFilm(Film film) {
         if (film == null) {
             throw new ValidationException("Фильм не может быть null");
