@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.PreparedStatement;
 import java.util.Collection;
 
 @Component
