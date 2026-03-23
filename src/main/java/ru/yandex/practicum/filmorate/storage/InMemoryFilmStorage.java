@@ -200,6 +200,10 @@ public class InMemoryFilmStorage implements FilmStorage {
                 "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
     }
 
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return List.of();
+    }
+
     @Override
     public List<Film> getRecommendations(Long userId) {
         log.warn("Метод getRecommendations не реализован в InMemoryFilmStorage");
