@@ -25,13 +25,3 @@ public class FeedService {
         return feedUser;
     }
 }
-
-//Логика по ТЗ:
-//private final UserService userService;
-//Collection<User> friends = userService.listFriends(id);
-//        if (friends.isEmpty()) {
-//        return Collections.emptyList();
-//        }
-//List<Long> friendsId = friends.stream()
-//        .map(User::getId)
-//        .toList();
