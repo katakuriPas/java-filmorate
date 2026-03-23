@@ -11,8 +11,8 @@ import ru.yandex.practicum.filmorate.model.Director;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class DirectorService {
 
     private final DirectorDbStorage directorDbStorage;

@@ -81,7 +81,7 @@ public class FilmService {
         if (filmStorage.getFilmById(newFilm.getId()).isEmpty()) {
             throw new NotFoundException("Фильм с id=" + newFilm.getId() + " не найден");
         }
-        validateFilm(newFilm);  //
+        validateFilm(newFilm);
         log.info("Обновление фильма: id={}", newFilm.getId());
         return filmStorage.updateFilm(newFilm);
     }
