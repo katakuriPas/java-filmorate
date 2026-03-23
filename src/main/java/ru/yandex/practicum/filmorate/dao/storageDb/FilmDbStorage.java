@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Profile("database")
@@ -217,7 +218,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> mostPopularFilms(Integer count) {
-        return jdbc.query(MOST_POPULAR_FILMS, filmMapper, Objects.requireNonNullElse(count, LIMIT_FILMS));
+        List<Film> films = jdbc.query(MOST_POPULAR_FILMS, filmMapper, Objects.requireNonNullElse(count, LIMIT_FILMS));
+        films.forEach(this::loadGenresAndDirectors);
+        return films;
+
     }
 
     @Override
@@ -236,6 +240,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId()
         );
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            List<Genre> sortedGenres = film.getGenres().stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toList());
+
+            film.setGenres(new LinkedHashSet<>(sortedGenres));
+            saveFilmGenres(id, film.getGenres());
+        }
         saveFilmGenres(id, film.getGenres());
 
         saveFilmDirectors(id, film.getDirectors());

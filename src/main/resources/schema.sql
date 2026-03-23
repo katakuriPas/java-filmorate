@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS reviews_likes;
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS films;
+DROP TABLE IF EXISTS feed;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS directors;
 DROP TABLE IF EXISTS friendship_status;
@@ -127,6 +128,16 @@ CREATE TABLE IF NOT EXISTS reviews_likes (
     CONSTRAINT fk_likes_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 );
 
+--Лента событий
+CREATE TABLE IF NOT EXISTS feed (
+	event_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	user_id BIGINT NOT NULL,
+	event_type VARCHAR(10) NOT NULL,
+	entity_id BIGINT NOT NULL,
+	operation VARCHAR(10) NOT NULL,
+	event_timestamp BIGINT NOT NULL
+);
+
 -- ============================================
 -- 3. ЗАПОЛНЕНИЕ СПРАВОЧНИКОВ
 -- ============================================
@@ -149,3 +160,25 @@ INSERT INTO genre (name) SELECT 'Боевик' WHERE NOT EXISTS (SELECT 1 FROM g
 -- Friendship Status
 INSERT INTO friendship_status (friendshipStatus) SELECT 'PENDING' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'PENDING');
 INSERT INTO friendship_status (friendshipStatus) SELECT 'ACCEPTED' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'ACCEPTED');
+
+-- ============================================
+--Запус триггера
+-- ============================================
+
+----Лайки
+--CREATE TRIGGER IF NOT EXISTS likes
+--BEFORE INSERT, UPDATE, DELETE ON film_likes
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Друзья
+--CREATE TRIGGER IF NOT EXISTS friend
+--BEFORE INSERT, UPDATE, DELETE ON friends
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Отзывы
+--CREATE TRIGGER IF NOT EXISTS review
+--BEFORE INSERT, UPDATE, DELETE ON reviews
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
