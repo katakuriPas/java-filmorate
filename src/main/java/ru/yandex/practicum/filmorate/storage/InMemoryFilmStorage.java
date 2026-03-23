@@ -78,54 +78,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> searchFilms(String query, String by) {
-        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
-
-        if (query == null || query.isBlank()) {
-            return List.of();
-        }
-
-        String[] searchBy = by.toLowerCase().split(",");
-
-        // Создаем обычные переменные
-        boolean searchByTitle = false;
-        boolean searchByDirector = false;
-
-        for (String s : searchBy) {
-            s = s.trim();
-            if (s.equals("title")) {
-                searchByTitle = true;
-            } else if (s.equals("director")) {
-                searchByDirector = true;
-            }
-        }
-
-        // СОЗДАЕМ FINAL КОПИИ для использования в лямбде. Нельзя использовать переменную внутри лямбда-выражения,
-        // которая изменяется где-то в коде.
-        final boolean finalSearchByTitle = searchByTitle;
-        final boolean finalSearchByDirector = searchByDirector;
-
-        String lowerQuery = query.toLowerCase();
-
-        return films.values().stream()
-                .filter(film -> {
-                    boolean matchByTitle = finalSearchByTitle &&
-                            film.getName().toLowerCase().contains(lowerQuery);
-
-                    boolean matchByDirector = finalSearchByDirector &&
-                            film.getDirectors() != null &&
-                            film.getDirectors().stream()
-                                    .anyMatch(d -> d.getName().toLowerCase().contains(lowerQuery));
-
-                    if (finalSearchByTitle && finalSearchByDirector) {
-                        return matchByTitle || matchByDirector;
-                    } else if (finalSearchByTitle) {
-                        return matchByTitle;
-                    } else if (finalSearchByDirector) {
-                        return matchByDirector;
-                    }
-                    return false;
-                })
-                .toList();
+        throw new UnsupportedOperationException(
+                "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
     }
 
     private void validateFilm(Film film) {
