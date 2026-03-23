@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -24,6 +25,7 @@ public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
     private final FilmStorage filmStorage;
+    private final FeedStorage feedStorage;
 
     public Collection<User> findAllUser() {
         log.info("Запрос на получение всех пользователей. Количество: {}", userStorage.findAllUser().size());
@@ -90,11 +92,13 @@ public class UserService {
     public void addFriend(Long userId, Long friendId) {
         log.info("Запрос на добавление в друзья: {} → {}", userId, friendId);
         friendshipStorage.addFriend(userId, friendId);
+        feedStorage.saveFeed(userId, "FRIEND", friendId, "ADD");
     }
 
     public void deleteFriend(Long userId, Long friendId) {
         log.info("Запрос на удаление из друзей: {} → {}", userId, friendId);
         friendshipStorage.deleteFriend(userId, friendId);
+        feedStorage.saveFeed(userId, "FRIEND", friendId, "REMOVE");
     }
 
     public Collection<User> listFriends(Long userId) {

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.Collection;
@@ -19,27 +20,42 @@ import java.util.Optional;
 public class ReviewService {
     @Autowired
     private final ReviewStorage reviewStorage;
+    private final FeedStorage feedStorage;
 
     public Review createReview(Review review) {
         Long userId = review.getUserId();
         Long filmId = review.getFilmId();
+        log.info("Запрос на добавление отзыва юзером {} к фильму {}", userId, filmId);
 
         validateReviewFormat(review);
         validateIds(filmId, userId);
 
-        return reviewStorage.createReview(review);
+        Review createdReview = reviewStorage.createReview(review);
+        feedStorage.saveFeed(userId, "REVIEW", createdReview.getReviewId(), "ADD");
+
+        return createdReview;
+
     }
 
     public Review updateReview(Review newReview) {
-        return reviewStorage.updateReview(newReview);
+        Review review = reviewStorage.updateReview(newReview);
+        Long userId = review.getUserId();
+        Long reviewId = review.getReviewId();
+        feedStorage.saveFeed(userId, "REVIEW", reviewId, "UPDATE");
+        return review;
     }
 
     public void deleteReview(Long id) {
+        Review review = getReviewById(id)
+                .orElseThrow(() -> new NotFoundException("Review с id = " + id + " не найден"));
+        Long userId = review.getUserId();
+        Long reviewId = review.getReviewId();
+        feedStorage.saveFeed(userId, "REVIEW", reviewId, "REMOVE");
         reviewStorage.deleteReview(id);
     }
 
     public Optional<Review> getReviewById(Long id) {
-        log.info("Запрос на получение пользователя с id: {}", id);
+        log.info("Запрос на получение отзыва с id: {}", id);
 
         Optional<Review> existing = reviewStorage.getReviewById(id);
         if (existing.isEmpty()) {

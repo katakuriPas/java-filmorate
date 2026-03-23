@@ -3,7 +3,9 @@ package ru.yandex.practicum.filmorate.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FeedService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -14,9 +16,11 @@ import java.util.Optional;
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
+    private final FeedService feedService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, FeedService feedService) {
         this.userService = userService;
+        this.feedService = feedService;
     }
 
     @GetMapping
@@ -80,6 +84,12 @@ public class UserController {
     public List<Film> getRecommendations(@PathVariable Long id) {
         return userService.getRecommendations(id);
     }
+  
+    @GetMapping("/{id}/feed")
+    public Collection<Feed> findFeed(@PathVariable Long id) {
+            return feedService.findFeed(id);
+    }
+
 
 /*
     @PutMapping("/{id}/friends/{friendId}")
