@@ -150,17 +150,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         return films;
     }
 
-    private void loadGenresAndDirectors(Film film) {
-        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
-        film.setGenres(new HashSet<>(genres));
-
-        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
-        film.setDirectors(new HashSet<>(directors));
-    }
-
     @Override
     public void likeFilm(Long filmId, Long userId) {
-        jdbc.update(LIKE_FILM, filmId, userId);
+        try {
+            jdbc.update(LIKE_FILM, filmId, userId);
+        } catch (DataAccessException e) {
+            if (!e.getMessage().contains("23505")) {
+                throw e;
+            }
+        }
     }
 
     @Override
@@ -275,19 +273,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 .orElseThrow(() -> new InternalServerException("Не удалось получить обновлённый фильм"));
     }
 
-    private void saveFilmGenres(Long filmId, Set<Genre> genres) {
-        jdbc.update(DELETE_FILM_GENRES, filmId);
-
-        // Добавляем новые
-        if (genres != null && !genres.isEmpty()) {
-            for (Genre genre : genres) {
-                if (genre.getId() != null) {
-                    jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
-                }
-            }
-        }
-    }
-
     @Override
     public List<Film> getFilmsByDirectorSortedByYear(Long directorId) {
         List<Film> films = jdbc.query(FIND_BY_DIRECTOR_SORTED_YEAR, filmMapper, directorId);
@@ -323,26 +308,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         List<Film> films = jdbc.query(GENERAL_MOVIES, filmMapper, firstUser, secondUser);
         films.forEach(this::loadGenresAndDirectors);
         return films;
-    }
-
-    private void saveFilmDirectors(Long filmId, Set<Director> directors) {
-        jdbc.update(DELETE_FILM_DIRECTORS, filmId);
-
-        if (directors != null && !directors.isEmpty()) {
-            for (Director director : directors) {
-                if (director.getId() != null) {
-                    jdbc.update(INSERT_FILM_DIRECTOR, filmId, director.getId());
-                }
-            }
-        }
-    }
-
-    private void loadFilmDetails(Film film) {
-        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
-        film.setGenres(new HashSet<>(genres));
-
-        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
-        film.setDirectors(new HashSet<>(directors));
     }
 
     @Override
@@ -452,5 +417,46 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         """;
 
         return jdbc.queryForList(sql, Long.class, userId, userId);
+    }
+
+    private void loadGenresAndDirectors(Film film) {
+        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+        film.setGenres(new HashSet<>(genres));
+
+        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
+        film.setDirectors(new HashSet<>(directors));
+    }
+
+    private void saveFilmDirectors(Long filmId, Set<Director> directors) {
+        jdbc.update(DELETE_FILM_DIRECTORS, filmId);
+
+        if (directors != null && !directors.isEmpty()) {
+            for (Director director : directors) {
+                if (director.getId() != null) {
+                    jdbc.update(INSERT_FILM_DIRECTOR, filmId, director.getId());
+                }
+            }
+        }
+    }
+
+    private void loadFilmDetails(Film film) {
+        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+        film.setGenres(new HashSet<>(genres));
+
+        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
+        film.setDirectors(new HashSet<>(directors));
+    }
+
+    private void saveFilmGenres(Long filmId, Set<Genre> genres) {
+        jdbc.update(DELETE_FILM_GENRES, filmId);
+
+        // Добавляем новые
+        if (genres != null && !genres.isEmpty()) {
+            for (Genre genre : genres) {
+                if (genre.getId() != null) {
+                    jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
+                }
+            }
+        }
     }
 }
