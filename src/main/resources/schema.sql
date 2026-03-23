@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS feed (
 	event_type VARCHAR(10) NOT NULL,
 	entity_id BIGINT NOT NULL,
 	operation VARCHAR(10) NOT NULL,
-	time_and_data BIGINT NOT NULL
+	event_timestamp BIGINT NOT NULL
 );
 
 -- ============================================

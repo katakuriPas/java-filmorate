@@ -41,7 +41,7 @@ public class FeedDbStorage implements FeedStorage {
 
     @Override
     public void saveFeed(Long id, String eventType, Long entityId, String operation) {
-        String sql = "INSERT INTO feed (user_id, event_type, entity_id, operation, time_and_data) " +
+        String sql = "INSERT INTO feed (user_id, event_type, entity_id, operation, event_timestamp) " +
                 "VALUES (:userId, :eventType, :entityId, :operation, :timestamp)";
 
         SqlParameterSource params = new MapSqlParameterSource()
