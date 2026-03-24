@@ -8,14 +8,11 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dao.mappers.*;
 import ru.yandex.practicum.filmorate.dao.storageDb.*;
-import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.GenreMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.MpaMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -34,10 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
         FilmDbStorage.class,
         GenreDbStorage.class,
         MpaDbStorage.class,
+        DirectorDbStorage.class,
         UserMapper.class,
         FilmMapper.class,
         MpaMapper.class,
-        GenreMapper.class
+        GenreMapper.class,
+        DirectorMapper.class
 })
 class FilmorateApplicationTests {
 
@@ -46,21 +45,27 @@ class FilmorateApplicationTests {
     private final FriendshipDbStorage friendshipStorage;
     private final GenreDbStorage genreStorage;
     private final MpaDbStorage mpaStorage;
+    private final DirectorDbStorage directorStorage;
     private final JdbcTemplate jdbc;
 
     @BeforeEach
     void cleanUp() {
+        jdbc.update("DELETE FROM film_directors");
         jdbc.update("DELETE FROM film_likes");
         jdbc.update("DELETE FROM film_genres");
         jdbc.update("DELETE FROM friends");
         jdbc.update("DELETE FROM films");
         jdbc.update("DELETE FROM users");
+        jdbc.update("DELETE FROM directors");
         jdbc.update("DELETE FROM friendship_status");
         jdbc.update("DELETE FROM genre");
         jdbc.update("DELETE FROM mpa");
+        jdbc.update("DELETE FROM film_directors");
+        jdbc.update("DELETE FROM directors");
 
         jdbc.update("ALTER TABLE users ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE films ALTER COLUMN id RESTART WITH 1");
+        jdbc.update("ALTER TABLE directors ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE genre ALTER COLUMN id RESTART WITH 1");
         jdbc.update("ALTER TABLE mpa ALTER COLUMN id RESTART WITH 1");
 
@@ -343,7 +348,7 @@ class FilmorateApplicationTests {
 
         // Assert: проверяем, что запись появилась в таблице like_films
         Integer count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM like_films WHERE film_id = ? AND user_id = ?",
+                "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?",
                 Integer.class,
                 film.getId(), 1L
         );
@@ -367,7 +372,7 @@ class FilmorateApplicationTests {
 
         // Assert: проверяем, что запись удалена из таблицы like_films
         Integer count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM like_films WHERE film_id = ? AND user_id = ?",
+                "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?",
                 Integer.class,
                 film.getId(), 1L
         );
@@ -394,16 +399,16 @@ class FilmorateApplicationTests {
                 .build());
 
         // Film1 получает 2 лайка, Film2 получает 0 лайков
-        filmStorage.likeFilm(film1.getId(), 1L);
-        filmStorage.likeFilm(film1.getId(), 2L);
+        filmStorage.likeFilm(film2.getId(), 1L);
+        filmStorage.likeFilm(film2.getId(), 2L);
 
         // Act: запрашиваем популярные фильмы
         List<Film> popular = filmStorage.mostPopularFilms(10);
 
         // Assert: проверяем порядок (сначала более популярный)
         assertThat(popular).hasSize(2);
-        assertThat(popular.get(0).getId()).isEqualTo(film1.getId());
-        assertThat(popular.get(1).getId()).isEqualTo(film2.getId());
+        assertThat(popular.get(0).getId()).isEqualTo(film2.getId());
+        assertThat(popular.get(1).getId()).isEqualTo(film1.getId());
     }
 
     private Mpa createMpa(String name) {

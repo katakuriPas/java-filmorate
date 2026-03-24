@@ -97,7 +97,6 @@ public class InMemoryUserStorage implements UserStorage {
         return true;
     }
 
-
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("Ошибка валидации: email не указан или не содержит @");
@@ -124,5 +123,10 @@ public class InMemoryUserStorage implements UserStorage {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+//        Заглушка. По ТЗ это класса быть не должно, на раз есть...
     }
 }

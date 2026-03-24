@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -22,9 +23,11 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final FeedStorage feedStorage;
 
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
 
     public Collection<Film> findAllFilm() {
         log.info("Запрос на получение всех фильмов");
@@ -54,6 +57,15 @@ public class FilmService {
             }
         }
 
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            for (var director : film.getDirectors()) {
+                if (director.getId() == null) {
+                    throw new ValidationException("ID режиссёра должен быть указан");
+                }
+                directorService.getDirectorById(director.getId());
+            }
+        }
+
         mpaService.getMpaById(film.getMpa().getId());
 
         validateFilm(film);
@@ -69,7 +81,7 @@ public class FilmService {
         if (filmStorage.getFilmById(newFilm.getId()).isEmpty()) {
             throw new NotFoundException("Фильм с id=" + newFilm.getId() + " не найден");
         }
-        validateFilm(newFilm);  //
+        validateFilm(newFilm);
         log.info("Обновление фильма: id={}", newFilm.getId());
         return filmStorage.updateFilm(newFilm);
     }
@@ -84,7 +96,7 @@ public class FilmService {
         if (userStorage.getUserById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
-
+        feedStorage.saveFeed(userId, "LIKE", filmId, "ADD");
         filmStorage.likeFilm(filmId, userId);
         log.info("Пользователь {} лайкнул фильм {}", userId, filmId);
     }
@@ -98,15 +110,69 @@ public class FilmService {
         if (userStorage.getUserById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
-
+        feedStorage.saveFeed(userId, "LIKE", filmId, "REMOVE");
         filmStorage.deleteLike(filmId, userId);
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }
 
     public List<Film> mostPopularFilms(Integer count) {
-
         log.info("Запрос на получение {} популярных фильмов", count);
         return filmStorage.mostPopularFilms(count);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("Параметр query не может быть пустым");
+        }
+
+        validateSearchParams(by);
+
+        return filmStorage.searchFilms(query, by);
+    }
+
+    // отдельный метод для валидации поиска параметров поиска by
+    private void validateSearchParams(String by) {
+        if (by == null || by.isBlank()) {
+            throw new ValidationException("Параметр by не может быть пустым");
+        }
+
+        String[] searchBy = by.toLowerCase().split(",");
+        for (String s : searchBy) {
+            String trimmed = s.trim();
+            if (!trimmed.equals("title") && !trimmed.equals("director")) {
+                throw new ValidationException(
+                        "Параметр by может содержать только 'title' и/или 'director'"
+                );
+            }
+        }
+    }
+
+    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
+        log.info("Запрос на получение {} популярных фильмов, жанр={}, год={}", count, genreId, year);
+
+        if (genreId != null) {
+            genreService.getGenreById(genreId);
+        }
+        if (year != null && year < 1895) {
+            throw new ValidationException("Год должен быть от 1895");
+        }
+        return filmStorage.mostPopularFilms(count, genreId, year);
+    }
+
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Запрос фильмов режиссёра id={} с сортировкой {}", directorId, sortBy);
+        directorService.getDirectorById(directorId);
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return filmStorage.getFilmsByDirectorSortedByYear(directorId);
+        } else { // по умолчанию likes
+            return filmStorage.getFilmsByDirectorSortedByLikes(directorId);
+        }
+    }
+
+    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
+        return filmStorage.getGeneralMovies(firstUser, secondUser);
     }
 
     private void validateFilm(Film film) {
@@ -133,5 +199,11 @@ public class FilmService {
             log.warn("Ошибка валидации: продолжительность фильма <= 0: {}", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
+    }
+
+    public void deleteFilm(Long id) {
+        log.info("Получен запрос на удаление фильма с id {}", id);
+        filmStorage.deleteFilm(id);
+        log.info("Фильм с id {} успешно удален", id);
     }
 }

@@ -1,11 +1,16 @@
 -- ============================================
 -- 1. ОЧИСТКА: Удаляем таблицы в правильном порядке
 -- ============================================
+DROP TABLE IF EXISTS film_directors;
 DROP TABLE IF EXISTS film_likes;
 DROP TABLE IF EXISTS film_genres;
 DROP TABLE IF EXISTS friends;
+DROP TABLE IF EXISTS reviews_likes;
+DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS films;
+DROP TABLE IF EXISTS feed;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS directors;
 DROP TABLE IF EXISTS friendship_status;
 DROP TABLE IF EXISTS genre;
 DROP TABLE IF EXISTS mpa;
@@ -41,6 +46,13 @@ CREATE TABLE IF NOT EXISTS genre (
 CREATE TABLE IF NOT EXISTS friendship_status (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     friendshipStatus VARCHAR(20) NOT NULL UNIQUE
+);
+
+-- Таблица режиссёров
+CREATE TABLE IF NOT EXISTS directors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    CONSTRAINT directors_name_unique UNIQUE (name)
 );
 
 -- Таблица фильмов
@@ -84,6 +96,48 @@ CREATE TABLE IF NOT EXISTS friends (
     CONSTRAINT fk_friends_status FOREIGN KEY (status_id) REFERENCES friendship_status(id)
 );
 
+-- Связь фильмов и режиссёров (многие-ко-многим)
+CREATE TABLE IF NOT EXISTS film_directors (
+    film_id BIGINT NOT NULL,
+    director_id BIGINT NOT NULL,
+    PRIMARY KEY (film_id, director_id),
+    CONSTRAINT fk_film_directors_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    CONSTRAINT fk_film_directors_director FOREIGN KEY (director_id) REFERENCES directors(id) ON DELETE CASCADE
+);
+
+-- Таблица отзывов
+CREATE TABLE IF NOT EXISTS reviews (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    is_positive BOOLEAN DEFAULT TRUE,
+    user_id BIGINT NOT NULL,
+    film_id BIGINT NOT NULL,
+    useful_count INT DEFAULT 0,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reviews_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    user_id BIGINT NOT NULL,
+    review_id BIGINT NOT NULL,
+    is_like BOOLEAN,
+
+    PRIMARY KEY (user_id, review_id),
+
+    CONSTRAINT fk_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_likes_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
+);
+
+--Лента событий
+CREATE TABLE IF NOT EXISTS feed (
+	event_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	user_id BIGINT NOT NULL,
+	event_type VARCHAR(10) NOT NULL,
+	entity_id BIGINT NOT NULL,
+	operation VARCHAR(10) NOT NULL,
+	event_timestamp BIGINT NOT NULL
+);
+
 -- ============================================
 -- 3. ЗАПОЛНЕНИЕ СПРАВОЧНИКОВ
 -- ============================================
@@ -106,3 +160,25 @@ INSERT INTO genre (name) SELECT 'Боевик' WHERE NOT EXISTS (SELECT 1 FROM g
 -- Friendship Status
 INSERT INTO friendship_status (friendshipStatus) SELECT 'PENDING' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'PENDING');
 INSERT INTO friendship_status (friendshipStatus) SELECT 'ACCEPTED' WHERE NOT EXISTS (SELECT 1 FROM friendship_status WHERE friendshipStatus = 'ACCEPTED');
+
+-- ============================================
+--Запус триггера
+-- ============================================
+
+----Лайки
+--CREATE TRIGGER IF NOT EXISTS likes
+--BEFORE INSERT, UPDATE, DELETE ON film_likes
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Друзья
+--CREATE TRIGGER IF NOT EXISTS friend
+--BEFORE INSERT, UPDATE, DELETE ON friends
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
+--
+----Отзывы
+--CREATE TRIGGER IF NOT EXISTS review
+--BEFORE INSERT, UPDATE, DELETE ON reviews
+--FOR EACH ROW
+--CALL "ru.yandex.practicum.filmorate.dao.GlobalFeedTrigger";
