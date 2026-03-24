@@ -28,6 +28,7 @@ public class FeedDbStorage implements FeedStorage {
         this.mapper = mapper;
     }
 
+
     @Override
     public Collection<Feed> findFeed(Long id) {
 

@@ -89,7 +89,6 @@ public class FilmService {
     public void likeFilm(Long filmId, Long userId) {
         log.info("Запрос на лайк: пользователь {} → фильм {}", userId, filmId);
 
-        // 🔹 Проверка существования сущностей
         if (filmStorage.getFilmById(filmId).isEmpty()) {
             throw new NotFoundException("Фильм с id=" + filmId + " не найден");
         }
