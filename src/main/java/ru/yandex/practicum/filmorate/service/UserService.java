@@ -6,13 +6,16 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,6 +24,7 @@ import java.util.Optional;
 public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
+    private final FilmStorage filmStorage;
     private final FeedStorage feedStorage;
 
     public Collection<User> findAllUser() {
@@ -105,6 +109,14 @@ public class UserService {
     public Collection<User> commonFriends(Long userId, Long otherId) {
         log.info("Запрос на получение общих друзей: {} и {}", userId, otherId);
         return friendshipStorage.commonFriends(userId, otherId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        log.info("Запрос рекомендаций для пользователя с id={}", userId);
+
+        getUserById(userId);
+
+        return filmStorage.getRecommendations(userId);
     }
 
     private void validateUser(User user) {

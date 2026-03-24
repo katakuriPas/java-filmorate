@@ -34,6 +34,8 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String DELETE_LIKE = "DELETE FROM reviews_likes WHERE review_id = ? AND user_id = ?";
     private static final String INCREMENT_RATING = "UPDATE reviews SET useful_count = useful_count + 1 WHERE id = ?";
     private static final String DECREMENT_RATING = "UPDATE reviews SET useful_count = useful_count - 1 WHERE id = ?";
+    private static final String INCREMENT_RATING_BY_2 = "UPDATE reviews SET useful_count = useful_count + 2 WHERE id = ?";
+    private static final String DECREMENT_RATING_BY_2 = "UPDATE reviews SET useful_count = useful_count - 2 WHERE id = ?";
     private static final String CHECK_EXISTING_VOTE = "SELECT is_like FROM reviews_likes WHERE review_id = ? AND user_id = ?";
 
     private final ReviewMapper reviewMapper;
@@ -119,9 +121,9 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
             }
         } else if (!vote.equals(isLike)) {
             if (isLike) {
-                jdbc.update("UPDATE reviews SET useful_count = useful_count + 2 WHERE id = ?", reviewId);
+                jdbc.update(INCREMENT_RATING_BY_2, reviewId);
             } else {
-                jdbc.update("UPDATE reviews SET useful_count = useful_count - 2 WHERE id = ?", reviewId);
+                jdbc.update(DECREMENT_RATING_BY_2, reviewId);
             }
         }
     }
@@ -158,4 +160,6 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
             return null;
         }
     }
+//    Если вернуть false вместо null, мы не сможем отличить нового пользователя от пользователя с дизлайком, что приведёт к некорректному начислению рейтинга (2 вместо 1 при первом голосовании)
+//    Нам важно различать три состояния: лайк (true), дизлайк (false) и отсутствие голоса (null)
 }

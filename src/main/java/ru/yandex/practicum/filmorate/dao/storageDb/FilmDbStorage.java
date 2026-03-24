@@ -150,17 +150,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         return films;
     }
 
-    private void loadGenresAndDirectors(Film film) {
-        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
-        film.setGenres(new HashSet<>(genres));
-
-        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
-        film.setDirectors(new HashSet<>(directors));
-    }
-
     @Override
     public void likeFilm(Long filmId, Long userId) {
-        jdbc.update(LIKE_FILM, filmId, userId);
+        try {
+            jdbc.update(LIKE_FILM, filmId, userId);
+        } catch (DataAccessException e) {
+            if (!e.getMessage().contains("23505")) {
+                throw e;
+            }
+        }
     }
 
     @Override
@@ -275,19 +273,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 .orElseThrow(() -> new InternalServerException("Не удалось получить обновлённый фильм"));
     }
 
-    private void saveFilmGenres(Long filmId, Set<Genre> genres) {
-        jdbc.update(DELETE_FILM_GENRES, filmId);
-
-        // Добавляем новые
-        if (genres != null && !genres.isEmpty()) {
-            for (Genre genre : genres) {
-                if (genre.getId() != null) {
-                    jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
-                }
-            }
-        }
-    }
-
     @Override
     public List<Film> getFilmsByDirectorSortedByYear(Long directorId) {
         List<Film> films = jdbc.query(FIND_BY_DIRECTOR_SORTED_YEAR, filmMapper, directorId);
@@ -300,17 +285,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         List<Film> films = jdbc.query(FIND_BY_DIRECTOR_SORTED_LIKES, filmMapper, directorId);
         films.forEach(this::loadGenresAndDirectors);
         return films;
-    }
-
-    @Override
-    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
-
-        if ("year".equalsIgnoreCase(sortBy)) {
-            return getFilmsByDirectorSortedByYear(directorId);
-        } else {
-            return getFilmsByDirectorSortedByLikes(directorId);
-        }
     }
 
     @Override
@@ -336,6 +310,123 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         return films;
     }
 
+    @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
+
+        String sql;
+        if ("year".equals(sortBy)) {
+            sql = "SELECT f.*, m.name as mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_directors fd ON f.id = fd.film_id " +
+                    "WHERE fd.director_id = ? " +
+                    "ORDER BY f.release_date";
+        } else { // likes
+            sql = "SELECT f.*, m.name as mpa_name, COUNT(fl.user_id) as likes_count " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_directors fd ON f.id = fd.film_id " +
+                    "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                    "WHERE fd.director_id = ? " +
+                    "GROUP BY f.id " +
+                    "ORDER BY likes_count DESC";
+        }
+
+        List<Film> films = jdbc.query(sql, filmMapper, directorId);
+
+        for (Film film : films) {
+            List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+            film.setGenres(new HashSet<>(genres));
+
+            List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
+            film.setDirectors(new HashSet<>(directors));
+        }
+
+        log.info("Найдено {} фильмов для режиссёра {}", films.size(), directorId);
+        return films;
+    }
+
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        log.info("Получение рекомендаций для пользователя {}", userId);
+
+        String checkLikesSql = "SELECT COUNT(*) FROM film_likes WHERE user_id = ?";
+        Integer likesCount = jdbc.queryForObject(checkLikesSql, Integer.class, userId);
+
+        if (likesCount == null || likesCount == 0) {
+            log.info("У пользователя {} нет лайков, рекомендаций нет", userId);
+            return List.of();
+        }
+
+        List<Long> similarUsers = findSimilarUsers(userId);
+
+        if (similarUsers.isEmpty()) {
+            log.info("Нет похожих пользователей для id={}, возвращаем пустой список", userId);
+            return List.of();
+        }
+
+        log.info("Найдены похожие пользователи: {}", similarUsers);
+
+        String placeholders = similarUsers.stream()
+                .map(u -> "?")
+                .collect(Collectors.joining(","));
+
+        String sql = """
+        SELECT DISTINCT f.*, m.name as mpa_name
+        FROM films f
+        LEFT JOIN mpa m ON f.mpa_id = m.id
+        WHERE f.id IN (
+            SELECT fl.film_id
+            FROM film_likes fl
+            WHERE fl.user_id IN (%s)
+              AND fl.film_id NOT IN (
+                  SELECT film_id FROM film_likes WHERE user_id = ?
+              )
+        )
+        ORDER BY (
+            SELECT COUNT(*)
+            FROM film_likes fl2
+            WHERE fl2.film_id = f.id
+              AND fl2.user_id IN (%s)
+        ) DESC
+        LIMIT 10
+        """.formatted(placeholders, placeholders);
+
+        List<Object> params = new ArrayList<>(similarUsers);
+        params.add(userId);
+        params.addAll(similarUsers);
+
+        List<Film> films = jdbc.query(sql, filmMapper, params.toArray());
+        films.forEach(this::loadGenresAndDirectors);
+
+        log.info("Найдено {} рекомендаций для пользователя {}", films.size(), userId);
+        return films;
+    }
+
+    // Вспомогательный метод для поиска пользователей с общими лайками
+    private List<Long> findSimilarUsers(Long userId) {
+        String sql = """
+        SELECT fl2.user_id
+        FROM film_likes fl1
+        JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
+        WHERE fl1.user_id = ? AND fl2.user_id != ?
+        GROUP BY fl2.user_id
+        ORDER BY COUNT(fl2.film_id) DESC
+        LIMIT 3
+        """;
+
+        return jdbc.queryForList(sql, Long.class, userId, userId);
+    }
+
+    private void loadGenresAndDirectors(Film film) {
+        List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
+        film.setGenres(new HashSet<>(genres));
+
+        List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
+        film.setDirectors(new HashSet<>(directors));
+    }
+
     private void saveFilmDirectors(Long filmId, Set<Director> directors) {
         jdbc.update(DELETE_FILM_DIRECTORS, filmId);
 
@@ -354,5 +445,18 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         List<Director> directors = jdbc.query(FIND_DIRECTORS_BY_FILM_ID, directorMapper, film.getId());
         film.setDirectors(new HashSet<>(directors));
+    }
+
+    private void saveFilmGenres(Long filmId, Set<Genre> genres) {
+        jdbc.update(DELETE_FILM_GENRES, filmId);
+
+        // Добавляем новые
+        if (genres != null && !genres.isEmpty()) {
+            for (Genre genre : genres) {
+                if (genre.getId() != null) {
+                    jdbc.update(INSERT_FILM_GENRE, filmId, genre.getId());
+                }
+            }
+        }
     }
 }

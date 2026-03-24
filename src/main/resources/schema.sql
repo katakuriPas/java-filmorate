@@ -75,15 +75,6 @@ CREATE TABLE IF NOT EXISTS film_genres (
     CONSTRAINT fk_film_genres_genre FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE CASCADE
 );
 
--- Связь фильмов и режиссёров (многие-ко-многим)
-CREATE TABLE IF NOT EXISTS film_directors (
-    film_id BIGINT NOT NULL,
-    director_id BIGINT NOT NULL,
-    PRIMARY KEY (film_id, director_id),
-    CONSTRAINT fk_film_directors_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
-    CONSTRAINT fk_film_directors_director FOREIGN KEY (director_id) REFERENCES directors(id) ON DELETE CASCADE
-);
-
 -- Лайки фильмов (ИСПРАВЛЕНО: like_films -> film_likes)
 CREATE TABLE IF NOT EXISTS film_likes (
     user_id BIGINT NOT NULL,
@@ -103,6 +94,15 @@ CREATE TABLE IF NOT EXISTS friends (
     CONSTRAINT fk_friends_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_friends_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_friends_status FOREIGN KEY (status_id) REFERENCES friendship_status(id)
+);
+
+-- Связь фильмов и режиссёров (многие-ко-многим)
+CREATE TABLE IF NOT EXISTS film_directors (
+    film_id BIGINT NOT NULL,
+    director_id BIGINT NOT NULL,
+    PRIMARY KEY (film_id, director_id),
+    CONSTRAINT fk_film_directors_film FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    CONSTRAINT fk_film_directors_director FOREIGN KEY (director_id) REFERENCES directors(id) ON DELETE CASCADE
 );
 
 -- Таблица отзывов
