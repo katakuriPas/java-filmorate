@@ -23,6 +23,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private static final String FIND_ALL = "SELECT * FROM users";
     private static final String INSERT = "INSERT INTO users (email, login, name, birthday) VALUES (?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
+    private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
 
     // SQL для проверки существования
     private static final String EXISTS_BY_LOGIN = "SELECT COUNT(*) FROM users WHERE login = ?";
@@ -77,10 +78,8 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     @Override
     public void deleteUser(Long id) {
 
-        String sql = "DELETE FROM users WHERE id = ?";
-
         try {
-            int rowsAffected = jdbc.update(sql, id);
+            int rowsAffected = jdbc.update(DELETE_USER, id);
 
             if (rowsAffected == 0) {
                 throw new NotFoundException("Пользователя с id " + id + " нет в базе");
