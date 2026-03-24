@@ -6,16 +6,12 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,8 +20,6 @@ import java.util.Optional;
 public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
-    private final FilmStorage filmStorage;
-    private final FeedStorage feedStorage;
 
     public Collection<User> findAllUser() {
         log.info("Запрос на получение всех пользователей. Количество: {}", userStorage.findAllUser().size());
@@ -92,13 +86,11 @@ public class UserService {
     public void addFriend(Long userId, Long friendId) {
         log.info("Запрос на добавление в друзья: {} → {}", userId, friendId);
         friendshipStorage.addFriend(userId, friendId);
-        feedStorage.saveFeed(userId, "FRIEND", friendId, "ADD");
     }
 
     public void deleteFriend(Long userId, Long friendId) {
         log.info("Запрос на удаление из друзей: {} → {}", userId, friendId);
         friendshipStorage.deleteFriend(userId, friendId);
-        feedStorage.saveFeed(userId, "FRIEND", friendId, "REMOVE");
     }
 
     public Collection<User> listFriends(Long userId) {
@@ -109,14 +101,6 @@ public class UserService {
     public Collection<User> commonFriends(Long userId, Long otherId) {
         log.info("Запрос на получение общих друзей: {} и {}", userId, otherId);
         return friendshipStorage.commonFriends(userId, otherId);
-    }
-
-    public List<Film> getRecommendations(Long userId) {
-        log.info("Запрос рекомендаций для пользователя с id={}", userId);
-
-        getUserById(userId);
-
-        return filmStorage.getRecommendations(userId);
     }
 
     private void validateUser(User user) {
@@ -136,11 +120,5 @@ public class UserService {
             log.warn("Ошибка валидации: некорректно введен день рождения");
             throw new ValidationException("День рождения не может быть в будущем");
         }
-    }
-
-    public void deleteUser(Long id) {
-        log.info("Получен запрос на удаление пользователя с id {}", id);
-        userStorage.deleteUser(id);
-        log.info("Пользователь с id {} успешно удален", id);
     }
 }

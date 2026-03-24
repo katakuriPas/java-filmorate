@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -68,18 +69,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         existingFilm.setReleaseDate(newFilm.getReleaseDate());
         existingFilm.setDuration(newFilm.getDuration());
 
-        if (newFilm.getDirectors() != null) {
-            existingFilm.setDirectors(newFilm.getDirectors());
-        }
-
         log.info("Фильм с id = {} успешно обновлён", newFilm.getId());
         return existingFilm;
-    }
-
-    @Override
-    public List<Film> searchFilms(String query, String by) {
-        throw new UnsupportedOperationException(
-                "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
     }
 
     private void validateFilm(Film film) {
@@ -125,42 +116,5 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Film> mostPopularFilms(Integer count) {
         return List.of();
-    }
-
-    @Override
-    public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
-        return List.of();
-    }
-
-    @Override
-    public List<Film> getFilmsByDirectorSortedByYear(Long directorId) {
-        return List.of();
-    }
-
-    @Override
-    public List<Film> getFilmsByDirectorSortedByLikes(Long directorId) {
-        return List.of();
-    }
-
-    @Override
-    public void deleteFilm(Long id) {
-//        Заглушка. По ТЗ класса не должно быть, но раз есть...
-    }
-
-    @Override
-    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        // Заглушка
-        throw new UnsupportedOperationException(
-                "InMemoryFilmStorage больше не поддерживается. Используйте FilmDbStorage с профилем database");
-    }
-
-    public List<Film> getGeneralMovies(Long firstUser, Long secondUser) {
-        return List.of();
-    }
-
-    @Override
-    public List<Film> getRecommendations(Long userId) {
-        log.warn("Метод getRecommendations не реализован в InMemoryFilmStorage");
-        return List.of(); // Возвращаем пустой список
     }
 }

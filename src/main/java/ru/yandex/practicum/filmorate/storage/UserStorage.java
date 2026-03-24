@@ -20,6 +20,4 @@ public interface UserStorage {
     boolean existsByEmail(String email);
 
     boolean existsByLoginExcludeId(String login, Long id);
-
-    void deleteUser(Long id);
 }
