@@ -127,27 +127,26 @@ public class FilmService {
             throw new ValidationException("Параметр query не может быть пустым");
         }
 
+        validateSearchParams(by);
+
+        return filmStorage.searchFilms(query, by);
+    }
+
+    // отдельный метод для валидации поиска параметров поиска by
+    private void validateSearchParams(String by) {
         if (by == null || by.isBlank()) {
             throw new ValidationException("Параметр by не может быть пустым");
         }
 
-        // Проверяем корректность параметра by
         String[] searchBy = by.toLowerCase().split(",");
-        boolean valid = false;
         for (String s : searchBy) {
-            s = s.trim();
-            if (s.equals("title") || s.equals("director")) {
-                valid = true;
-            } else {
-                throw new ValidationException("Параметр by может содержать только 'title' и/или 'director'");
+            String trimmed = s.trim();
+            if (!trimmed.equals("title") && !trimmed.equals("director")) {
+                throw new ValidationException(
+                        "Параметр by может содержать только 'title' и/или 'director'"
+                );
             }
         }
-
-        if (!valid) {
-            throw new ValidationException("Параметр by должен содержать 'title' и/или 'director'");
-        }
-
-        return filmStorage.searchFilms(query, by);
     }
 
     public List<Film> mostPopularFilms(Integer count, Long genreId, Integer year) {
