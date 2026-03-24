@@ -15,6 +15,11 @@ import java.util.Collection;
 @Component
 @Profile("database")
 public class FeedDbStorage implements FeedStorage {
+    private static final String CHECK_USER = "SELECT COUNT(*) FROM users WHERE id = :userId";
+    private static final String FIND_FEED = "SELECT * FROM feed WHERE user_id IN (:friendId)";
+    private static final String SAVE_FEED = "INSERT INTO feed (user_id, event_type, entity_id, operation, event_timestamp) " +
+            "VALUES (:userId, :eventType, :entityId, :operation, :timestamp)";
+
     private final NamedParameterJdbcTemplate namedJdbc;
     private final RowMapper<Feed> mapper;
 
@@ -25,24 +30,20 @@ public class FeedDbStorage implements FeedStorage {
 
     @Override
     public Collection<Feed> findFeed(Long id) {
-        String checkUserSql = "SELECT COUNT(*) FROM users WHERE id = :userId";
-        Integer count = namedJdbc.queryForObject(checkUserSql, new MapSqlParameterSource("userId", id), Integer.class);
+
+        Integer count = namedJdbc.queryForObject(CHECK_USER, new MapSqlParameterSource("userId", id), Integer.class);
 
         if (count == null || count == 0) {
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         }
 
-        String sql = "SELECT * FROM feed WHERE user_id IN (:friendId)";
-
         SqlParameterSource parameters = new MapSqlParameterSource("friendId", id);
 
-        return namedJdbc.query(sql, parameters, mapper);
+        return namedJdbc.query(FIND_FEED, parameters, mapper);
     }
 
     @Override
     public void saveFeed(Long id, String eventType, Long entityId, String operation) {
-        String sql = "INSERT INTO feed (user_id, event_type, entity_id, operation, event_timestamp) " +
-                "VALUES (:userId, :eventType, :entityId, :operation, :timestamp)";
 
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", id)
@@ -51,6 +52,6 @@ public class FeedDbStorage implements FeedStorage {
                 .addValue("operation", operation)
                 .addValue("timestamp", System.currentTimeMillis()); // Критично для тестов Postman!
 
-        namedJdbc.update(sql, params);
+        namedJdbc.update(SAVE_FEED, params);
     }
 }
