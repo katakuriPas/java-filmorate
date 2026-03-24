@@ -117,6 +117,69 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     ORDER BY COUNT(fl.user_id) DESC
             """;
 
+    private static final String DELETE_FILM = "DELETE FROM films WHERE id = ?";
+
+    private static final String GET_FILMS_BY_DIRECTOR_IS_YEAR = "SELECT f.*, m.name as mpa_name " +
+            "FROM films f " +
+            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+            "JOIN film_directors fd ON f.id = fd.film_id " +
+            "WHERE fd.director_id = ? " +
+            "ORDER BY f.release_date";
+
+    private static final String GET_FILMS_BY_DIRECTOR_IS_LIKE = "SELECT f.*, m.name as mpa_name, COUNT(fl.user_id) as likes_count " +
+            "FROM films f " +
+            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+            "JOIN film_directors fd ON f.id = fd.film_id " +
+            "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+            "WHERE fd.director_id = ? " +
+            "GROUP BY f.id " +
+            "ORDER BY likes_count DESC";
+
+    private static final String CHECK_LIKES = "SELECT COUNT(*) FROM film_likes WHERE user_id = ?";
+
+    private static final String FIND_SIMILAR_USERS = """
+            SELECT fl2.user_id
+            FROM film_likes fl1
+            JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
+            WHERE fl1.user_id = ? AND fl2.user_id != ?
+            GROUP BY fl2.user_id
+            ORDER BY COUNT(fl2.film_id) DESC
+            LIMIT 3
+            """;
+
+    private static final String SEARCH_FILM_WHERE_TITLE_OR_DIRECTOR =
+            "AND (LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?)) ";
+
+    private static final String SEARCH_FILM_WHERE_TITLE =
+            "AND LOWER(f.name) LIKE LOWER(?) ";
+
+    private static final String SEARCH_FILM_WHERE_DIRECTOR =
+            "AND LOWER(d.name) LIKE LOWER(?) ";
+
+    private static final String SEARCH_FILM_ORDER_BY_LIKES =
+            "ORDER BY (SELECT COUNT(*) FROM film_likes fl WHERE fl.film_id = f.id) DESC";
+
+    private static final String FIND_RECOMMENDATIONS = """
+    SELECT DISTINCT f.*, m.name as mpa_name
+    FROM films f
+    LEFT JOIN mpa m ON f.mpa_id = m.id
+    WHERE f.id IN (
+        SELECT fl.film_id
+        FROM film_likes fl
+        WHERE fl.user_id IN (%1$s)
+          AND fl.film_id NOT IN (
+              SELECT film_id FROM film_likes WHERE user_id = ?
+          )
+    )
+    ORDER BY (
+        SELECT COUNT(*)
+        FROM film_likes fl2
+        WHERE fl2.film_id = f.id
+          AND fl2.user_id IN (%1$s)
+    ) DESC
+    LIMIT 10
+    """;
+
     private final JdbcTemplate jdbc;
     private final GenreMapper genreMapper;
     private final FilmMapper filmMapper;
@@ -186,21 +249,23 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             }
         }
 
+        String searchPattern = "%" + query.toLowerCase() + "%";
+
         if (searchByTitle && searchByDirector) {
-            sql.append("AND (LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?)) ");
-            params.add("%" + query + "%");
-            params.add("%" + query + "%");
+            sql.append(SEARCH_FILM_WHERE_TITLE_OR_DIRECTOR);
+            params.add(searchPattern);
+            params.add(searchPattern);
         } else if (searchByTitle) {
-            sql.append("AND LOWER(f.name) LIKE LOWER(?) ");
-            params.add("%" + query + "%");
+            sql.append(SEARCH_FILM_WHERE_TITLE);
+            params.add(searchPattern);
         } else if (searchByDirector) {
-            sql.append("AND LOWER(d.name) LIKE LOWER(?) ");
-            params.add("%" + query + "%");
+            sql.append(SEARCH_FILM_WHERE_DIRECTOR);
+            params.add(searchPattern);
         } else {
             throw new IllegalArgumentException("Параметр 'by' должен содержать 'title' и/или 'director'");
         }
 
-        sql.append("ORDER BY (SELECT COUNT(*) FROM film_likes fl WHERE fl.film_id = f.id) DESC");
+        sql.append(SEARCH_FILM_ORDER_BY_LIKES);
 
         log.debug("SQL запрос: {}", sql);
 
@@ -290,10 +355,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public void deleteFilm(Long id) {
 
-        String sql = "DELETE FROM films WHERE id = ?";
-
         try {
-            int rowsAffected = jdbc.update(sql, id);
+            int rowsAffected = jdbc.update(DELETE_FILM, id);
 
             if (rowsAffected == 0) {
                 throw new NotFoundException("Фильма с id " + id + " нет в базе");
@@ -314,26 +377,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         log.info("Получение фильмов режиссёра {} с сортировкой по {}", directorId, sortBy);
 
+        List<Film> films = new ArrayList<>();
+
         String sql;
         if ("year".equals(sortBy)) {
-            sql = "SELECT f.*, m.name as mpa_name " +
-                    "FROM films f " +
-                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-                    "JOIN film_directors fd ON f.id = fd.film_id " +
-                    "WHERE fd.director_id = ? " +
-                    "ORDER BY f.release_date";
+            films = jdbc.query(GET_FILMS_BY_DIRECTOR_IS_YEAR, filmMapper, directorId);
         } else { // likes
-            sql = "SELECT f.*, m.name as mpa_name, COUNT(fl.user_id) as likes_count " +
-                    "FROM films f " +
-                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-                    "JOIN film_directors fd ON f.id = fd.film_id " +
-                    "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
-                    "WHERE fd.director_id = ? " +
-                    "GROUP BY f.id " +
-                    "ORDER BY likes_count DESC";
+            films = jdbc.query(GET_FILMS_BY_DIRECTOR_IS_LIKE, filmMapper, directorId);
         }
-
-        List<Film> films = jdbc.query(sql, filmMapper, directorId);
 
         for (Film film : films) {
             List<Genre> genres = jdbc.query(FIND_GENRES_BY_FILM_ID, genreMapper, film.getId());
@@ -351,8 +402,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     public List<Film> getRecommendations(Long userId) {
         log.info("Получение рекомендаций для пользователя {}", userId);
 
-        String checkLikesSql = "SELECT COUNT(*) FROM film_likes WHERE user_id = ?";
-        Integer likesCount = jdbc.queryForObject(checkLikesSql, Integer.class, userId);
+        Integer likesCount = jdbc.queryForObject(CHECK_LIKES, Integer.class, userId);
 
         if (likesCount == null || likesCount == 0) {
             log.info("У пользователя {} нет лайков, рекомендаций нет", userId);
@@ -372,26 +422,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 .map(u -> "?")
                 .collect(Collectors.joining(","));
 
-        String sql = """
-        SELECT DISTINCT f.*, m.name as mpa_name
-        FROM films f
-        LEFT JOIN mpa m ON f.mpa_id = m.id
-        WHERE f.id IN (
-            SELECT fl.film_id
-            FROM film_likes fl
-            WHERE fl.user_id IN (%s)
-              AND fl.film_id NOT IN (
-                  SELECT film_id FROM film_likes WHERE user_id = ?
-              )
-        )
-        ORDER BY (
-            SELECT COUNT(*)
-            FROM film_likes fl2
-            WHERE fl2.film_id = f.id
-              AND fl2.user_id IN (%s)
-        ) DESC
-        LIMIT 10
-        """.formatted(placeholders, placeholders);
+        String sql = String.format(FIND_RECOMMENDATIONS, placeholders);
 
         List<Object> params = new ArrayList<>(similarUsers);
         params.add(userId);
@@ -406,17 +437,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     // Вспомогательный метод для поиска пользователей с общими лайками
     private List<Long> findSimilarUsers(Long userId) {
-        String sql = """
-        SELECT fl2.user_id
-        FROM film_likes fl1
-        JOIN film_likes fl2 ON fl1.film_id = fl2.film_id
-        WHERE fl1.user_id = ? AND fl2.user_id != ?
-        GROUP BY fl2.user_id
-        ORDER BY COUNT(fl2.film_id) DESC
-        LIMIT 3
-        """;
 
-        return jdbc.queryForList(sql, Long.class, userId, userId);
+        return jdbc.queryForList(FIND_SIMILAR_USERS, Long.class, userId, userId);
     }
 
     private void loadGenresAndDirectors(Film film) {
